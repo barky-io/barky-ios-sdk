@@ -1,0 +1,21 @@
+name: Swift SDK
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Core tests
+        run: swift test
+      - name: Build iOS consumer
+        run: >-
+          xcodebuild -project Examples/BarkyDemo/BarkyDemo.xcodeproj
+          -scheme BarkyDemo -destination 'generic/platform=iOS Simulator'
+          build CODE_SIGNING_ALLOWED=NO

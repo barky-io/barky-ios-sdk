@@ -1,0 +1,468 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3A5A11A4853AF03C566911B8 /* BarkyDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF968FA33804F15978BE0AC6 /* BarkyDemoApp.swift */; };
+		5CE40C33C8DB74CC2A4F1A74 /* ChatUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40755F29493C4BAEDBB25EF6 /* ChatUITests.swift */; };
+		872FD3F041B19E165B4AD986 /* Barky in Frameworks */ = {isa = PBXBuildFile; productRef = 43AADB59A760E500B1F499C2 /* Barky */; };
+		A204B9F0AD67829417DEC280 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EAF71A7D049C5301C2544E76 /* Foundation.framework */; };
+		BE9B522B4CCDD1E035A5BCE4 /* DemoProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F152501ED5CB3C237BDD342 /* DemoProtocol.swift */; };
+		E0A6A7CE243689383A2FFAF8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EAF71A7D049C5301C2544E76 /* Foundation.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		642D6F574691DB1006919C6E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5699509B3BD9F5BB4F4621CD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D0667513354AA924B7A6E601;
+			remoteInfo = BarkyDemo;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		1F152501ED5CB3C237BDD342 /* DemoProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DemoProtocol.swift; sourceTree = "<group>"; };
+		40755F29493C4BAEDBB25EF6 /* ChatUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ChatUITests.swift; path = UITests/ChatUITests.swift; sourceTree = "<group>"; };
+		81B6D5248F4CECDD67D7579C /* BarkyDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BarkyDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AECCB9608A435676FE86C4E3 /* BarkyDemoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BarkyDemoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CF968FA33804F15978BE0AC6 /* BarkyDemoApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BarkyDemoApp.swift; sourceTree = "<group>"; };
+		EAF71A7D049C5301C2544E76 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4FE919F64F82D45AEF9C2FC1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A204B9F0AD67829417DEC280 /* Foundation.framework in Frameworks */,
+				872FD3F041B19E165B4AD986 /* Barky in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E325369ED1782A38CF091732 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E0A6A7CE243689383A2FFAF8 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0BB93392FB31FEAF95CB3C62 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				81B6D5248F4CECDD67D7579C /* BarkyDemo.app */,
+				AECCB9608A435676FE86C4E3 /* BarkyDemoUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		37E1A4D4D17F1F513F6B588A = {
+			isa = PBXGroup;
+			children = (
+				0BB93392FB31FEAF95CB3C62 /* Products */,
+				A8DEAE1B08EEE70A057A2766 /* Frameworks */,
+				71C545CBABB41988084B755F /* Demo */,
+			);
+			sourceTree = "<group>";
+		};
+		71C545CBABB41988084B755F /* Demo */ = {
+			isa = PBXGroup;
+			children = (
+				CF968FA33804F15978BE0AC6 /* BarkyDemoApp.swift */,
+				1F152501ED5CB3C237BDD342 /* DemoProtocol.swift */,
+				40755F29493C4BAEDBB25EF6 /* ChatUITests.swift */,
+			);
+			name = Demo;
+			sourceTree = "<group>";
+		};
+		A8DEAE1B08EEE70A057A2766 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F2ABA51A5BA5475D685207B0 /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F2ABA51A5BA5475D685207B0 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				EAF71A7D049C5301C2544E76 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B269D5C75404CED561A6C4DA /* BarkyDemoUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 20E425BCD67165A8CE28D494 /* Build configuration list for PBXNativeTarget "BarkyDemoUITests" */;
+			buildPhases = (
+				E013D8836E2397871E986474 /* Sources */,
+				E325369ED1782A38CF091732 /* Frameworks */,
+				8FBB318C69011226C2C6F414 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				38FA106AC010953E044288E2 /* PBXTargetDependency */,
+			);
+			name = BarkyDemoUITests;
+			productName = BarkyDemoUITests;
+			productReference = AECCB9608A435676FE86C4E3 /* BarkyDemoUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		D0667513354AA924B7A6E601 /* BarkyDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 03C1593975FE1D06B9E574C9 /* Build configuration list for PBXNativeTarget "BarkyDemo" */;
+			buildPhases = (
+				BE41B6B9CE00EC6DAFCC17E4 /* Sources */,
+				4FE919F64F82D45AEF9C2FC1 /* Frameworks */,
+				FC552551CF7428952C133A53 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BarkyDemo;
+			packageProductDependencies = (
+				43AADB59A760E500B1F499C2 /* Barky */,
+			);
+			productName = BarkyDemo;
+			productReference = 81B6D5248F4CECDD67D7579C /* BarkyDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5699509B3BD9F5BB4F4621CD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = 1A7AC678653DD579EF7107D6 /* Build configuration list for PBXProject "BarkyDemo" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 37E1A4D4D17F1F513F6B588A;
+			minimizedProjectReferenceProxies = 0;
+			packageReferences = (
+				7A5925298EE457DBD6BD72B2 /* XCLocalSwiftPackageReference ".." */,
+			);
+			preferredProjectObjectVersion = 100;
+			productRefGroup = 0BB93392FB31FEAF95CB3C62 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D0667513354AA924B7A6E601 /* BarkyDemo */,
+				B269D5C75404CED561A6C4DA /* BarkyDemoUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8FBB318C69011226C2C6F414 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FC552551CF7428952C133A53 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BE41B6B9CE00EC6DAFCC17E4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A5A11A4853AF03C566911B8 /* BarkyDemoApp.swift in Sources */,
+				BE9B522B4CCDD1E035A5BCE4 /* DemoProtocol.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E013D8836E2397871E986474 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5CE40C33C8DB74CC2A4F1A74 /* ChatUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		38FA106AC010953E044288E2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = BarkyDemo;
+			target = D0667513354AA924B7A6E601 /* BarkyDemo */;
+			targetProxy = 642D6F574691DB1006919C6E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1AB2C5AF744AE9DF1424687B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.barky.BarkyDemoUITests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BarkyDemo;
+			};
+			name = Debug;
+		};
+		253C1B19E19F372B1580C9E1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.barky.BarkyDemo;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		BF205602431826FE88C718DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.barky.BarkyDemoUITests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BarkyDemo;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		D083039690666637D991C50D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E4A4943D9296D12456715C93 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.barky.BarkyDemo;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F8CEC36E120F2FA976BE5EC2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		03C1593975FE1D06B9E574C9 /* Build configuration list for PBXNativeTarget "BarkyDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				253C1B19E19F372B1580C9E1 /* Release */,
+				E4A4943D9296D12456715C93 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1A7AC678653DD579EF7107D6 /* Build configuration list for PBXProject "BarkyDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F8CEC36E120F2FA976BE5EC2 /* Debug */,
+				D083039690666637D991C50D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		20E425BCD67165A8CE28D494 /* Build configuration list for PBXNativeTarget "BarkyDemoUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BF205602431826FE88C718DE /* Release */,
+				1AB2C5AF744AE9DF1424687B /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		7A5925298EE457DBD6BD72B2 /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		43AADB59A760E500B1F499C2 /* Barky */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7A5925298EE457DBD6BD72B2 /* XCLocalSwiftPackageReference ".." */;
+			productName = Barky;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 5699509B3BD9F5BB4F4621CD /* Project object */;
+}
