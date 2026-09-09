@@ -103,6 +103,7 @@ public enum BarkyError: Error, Equatable, Sendable {
     case invalidConfiguration
     case invalidSession
     case identityChanged
+    case pendingMessage
     case invalidMessage
     case invalidResponse
     case http(status: Int, code: String)

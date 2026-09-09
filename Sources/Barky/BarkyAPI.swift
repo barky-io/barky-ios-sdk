@@ -134,6 +134,36 @@ final class BarkyAPI {
         guard Set(response.messageIds) == Set(messageIDs) else { throw BarkyError.invalidResponse }
     }
 
+    func registerPushDevice(token: Data, environment: BarkyPushEnvironment, bundleID: String) async throws -> String {
+        struct Payload: Encodable { let deviceToken: String; let environment: String; let bundleId: String }
+        struct Receipt: Decodable { let registrationId: String }
+        let result: Receipt = try await request(path: "push/devices", body: JSONEncoder().encode(Payload(
+            deviceToken: token.map { String(format: "%02x", $0) }.joined(), environment: environment.rawValue, bundleId: bundleID)))
+        guard UUID(uuidString: result.registrationId) != nil else { throw BarkyError.invalidResponse }
+        return result.registrationId
+    }
+
+    func unregisterPushDevice(registrationID: String) async throws {
+        struct Receipt: Decodable { let ok: Bool }
+        let result: Receipt = try await request(path: "push/devices/unregister", body: JSONEncoder().encode(["registrationId": registrationID]))
+        guard result.ok else { throw BarkyError.invalidResponse }
+    }
+
+    func unregisterPushBestEffort(registrationID: String, customerID: String) {
+        guard let auth = credential, auth.customerID == customerID, auth.expiresAt > Date() else { return }
+        var request = URLRequest(url: configuration.apiURL.appendingPathComponent("push/devices/unregister"))
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(auth.token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONEncoder().encode(["registrationId": registrationID])
+        let settings = URLSessionConfiguration.ephemeral
+        settings.timeoutIntervalForRequest = 10
+        settings.timeoutIntervalForResource = 15
+        settings.urlCache = nil; settings.httpCookieStorage = nil
+        let transport = URLSession(configuration: settings, delegate: NoRedirects(), delegateQueue: nil)
+        transport.dataTask(with: request) { _, _, _ in transport.finishTasksAndInvalidate() }.resume()
+    }
+
     func send(_ pending: PendingMessage) async throws -> MessageReceipt {
         struct Payload: Encodable {
             let body: String

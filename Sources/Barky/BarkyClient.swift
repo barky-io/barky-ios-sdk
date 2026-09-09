@@ -16,6 +16,7 @@ public final class BarkyClient: ObservableObject {
     @Published private(set) var pending: PendingMessage?
 
     private var api: BarkyAPI?
+    private var push: PushRegistrationController?
     private let storage: ChatStorage
     private var storageKey: String?
     private var cursor = 0
@@ -38,6 +39,7 @@ public final class BarkyClient: ObservableObject {
         if let configuration {
             try configuration.validate()
             api = BarkyAPI(configuration: configuration, session: session, sessionConfiguration: sessionConfiguration, storage: storage)
+            push = PushRegistrationController(api: api!, storage: storage)
         }
     }
 
@@ -47,6 +49,7 @@ public final class BarkyClient: ObservableObject {
         try configuration.validate()
         invalidate()
         api = BarkyAPI(configuration: configuration, sessionConfiguration: sessionConfiguration, storage: storage)
+        push = PushRegistrationController(api: api!, storage: storage)
         restartPolling()
     }
 
@@ -54,6 +57,7 @@ public final class BarkyClient: ObservableObject {
     /// Cancels work and clears visible data and credentials. It does not delete the
     /// customer's server conversation or the Keychain record needed for restoration.
     public func invalidate() {
+        push?.disconnect(); push = nil
         generation = UUID()
         polling?.cancel(); polling = nil
         sending?.cancel(); sending = nil
@@ -81,6 +85,59 @@ public final class BarkyClient: ObservableObject {
         }
         if let storageKey { try storage.remove(key: storageKey) }
         invalidate()
+    }
+
+    /// Forward the fresh APNs token from your app delegate after obtaining consent.
+    /// Throws on failure; call again with the latest token when connectivity returns.
+    public func registerForPushNotifications(deviceToken: Data, environment: BarkyPushEnvironment,
+                                             bundleID: String = Bundle.main.bundleIdentifier ?? "") async throws {
+        guard let push else { throw BarkyError.notConfigured }
+        try await push.register(token: deviceToken, environment: environment, bundleID: bundleID)
+    }
+
+    /// Await this before logout, changing accounts, or disabling support notifications.
+    /// A failure means cleanup is unconfirmed; retry before changing the session provider.
+    public func disablePushNotifications() async throws {
+        guard let push else { throw BarkyError.notConfigured }
+        try await push.disable()
+    }
+
+    /// Removes this device's push registration before resetting the visitor identity.
+    public func resetSessionWithPushCleanup() async throws {
+        try await disablePushNotifications()
+        try resetSession()
+    }
+
+    /// Returns true only for a Barky notification authorized for the current customer.
+    /// The host app presents ChatView after this returns true. Fetching does not mark read.
+    public func handlePushNotification(_ userInfo: [AnyHashable: Any]) async throws -> Bool {
+        guard let notification = BarkyPushNotification(userInfo: userInfo) else { return false }
+        guard let api else { throw BarkyError.notConfigured }
+        let version = generation
+        let auth = try await api.authenticate()
+        try check(version)
+        guard auth.customerID.lowercased() == notification.customerID.lowercased() else { return false }
+        do {
+            let page = try await api.messages(conversationID: notification.conversationID, after: 0)
+            try check(version)
+            guard page.conversation.id.lowercased() == notification.conversationID.lowercased() else { throw BarkyError.invalidResponse }
+        } catch BarkyError.http(status: 404, code: _) { return false }
+        try await prepare(version: version)
+        try check(version)
+        if conversationID?.lowercased() != notification.conversationID.lowercased() {
+            // Preserve an unsent draft or an uncertain send in another conversation.
+            guard pending == nil, draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw BarkyError.pendingMessage }
+            try persist(conversationID: notification.conversationID, pending: nil)
+            generation = UUID()
+            polling?.cancel(); polling = nil
+            reportingReads?.cancel(); reportingReads = nil
+            visibleMessages = [:]; visibleSince = [:]; acknowledgedReads = []
+            conversationID = notification.conversationID
+            conversationStatus = nil; messages = []; cursor = 0; isLoading = false
+        }
+        await refresh()
+        restartPolling()
+        return true
     }
 
     /// Refresh history and status. ChatView calls this automatically while active.
@@ -308,4 +365,15 @@ public enum BarkySDK {
     public static func logout() { shared.invalidate() }
 
     public static func resetSession() throws { try shared.resetSession() }
+
+    public static func registerForPushNotifications(deviceToken: Data, environment: BarkyPushEnvironment,
+                                                    bundleID: String = Bundle.main.bundleIdentifier ?? "") async throws {
+        try await shared.registerForPushNotifications(deviceToken: deviceToken, environment: environment, bundleID: bundleID)
+    }
+
+    public static func disablePushNotifications() async throws { try await shared.disablePushNotifications() }
+    public static func resetSessionWithPushCleanup() async throws { try await shared.resetSessionWithPushCleanup() }
+    public static func handlePushNotification(_ userInfo: [AnyHashable: Any]) async throws -> Bool {
+        try await shared.handlePushNotification(userInfo)
+    }
 }

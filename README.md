@@ -9,14 +9,15 @@ It provides a SwiftUI `ChatView` and a UIKit `ChatViewController` with no extern
 - Acknowledge visible support replies so operators can see their read status
 - English and Korean localization, Dynamic Type, VoiceOver, and Dark Mode
 
-Attachments, push notifications, and agent online status are not supported.
+Optional APNs reply notifications are supported with channel configuration and host-app opt-in.
+Attachments and agent online status are not supported.
 
 English is the default language for this project's documentation.
 
 ## Installation
 
 In Xcode, choose **File → Add Package Dependencies…**, enter the repository URL below,
-select version `0.3.0` or later, and add the **Barky** product to your app target.
+select version `0.4.0` or later, and add the **Barky** product to your app target.
 
 ```text
 https://github.com/barky-io/barky-ios-sdk.git
@@ -26,7 +27,7 @@ To use the SDK in another Swift package, add:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.3.0")
+    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.4.0")
 ],
 targets: [
     .target(name: "MyApp", dependencies: [
@@ -82,6 +83,16 @@ session creation and message requests.
 
 For development and tests, the optional `apiURL` initializer argument can override
 the service endpoint. Normal app integrations only need an SDK API key.
+
+## Push notifications
+
+Configure APNs separately for each environment in your iOS channel, then forward
+APNs device tokens and notification taps from your app delegate. The SDK never
+prompts for permission or replaces your delegates automatically. Alerts use a generic
+reply notice, and tapping them checks the current customer before opening chat.
+
+Follow the [push notification integration guide](Documentation/PushNotifications.md)
+for setup, SwiftUI/UIKit integration, logout cleanup, and device testing.
 
 ## Read receipts
 

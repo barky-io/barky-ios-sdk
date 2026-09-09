@@ -88,3 +88,17 @@ is documented. Custom network protocols are trusted host-app configuration.
 
 This is a bounded source/publication review, not a penetration test or a guarantee
 that the SDK or its integrating applications contain no vulnerabilities.
+
+## 0.4.0 scope
+
+Adds opt-in APNs registration, authenticated notification routing, awaited cleanup,
+and English integration documentation. APNs provider keys remain in the Barky service;
+the package accepts only a device token from the host app. No private keys, real device
+tokens, application credentials, customer conversations, or internal server code are
+included. The SDK does not swizzle delegates or request notification permission.
+Device ID is declared in the privacy manifest for optional push functionality.
+
+Validation for 0.4.0: 31 package tests passed; two optional live fixture tests were
+skipped. Three iOS Simulator UI tests passed. The public file export passed redacted
+Gitleaks with no findings, and the privacy manifest/whitespace checks passed.
+These checks do not establish live APNs acceptance or device delivery.

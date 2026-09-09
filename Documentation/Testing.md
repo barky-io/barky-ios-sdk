@@ -78,3 +78,11 @@ These are local verification results, not a production API deployment.
 These results cover local integration and Simulator execution. No production
 deployment, physical-device validation, remote package publication, or release tag
 was performed.
+
+## Push notifications
+
+`PushNotificationTests` exercises token encoding and private-session registration,
+registration cleanup after recreation, failed-cleanup retention, malformed/unrelated
+payloads, and authenticated routing without read receipts. No real device token or
+APNs key is included in these fixtures. See [device testing](PushNotifications.md#delivery-behavior-and-testing)
+for the signed-app checks required to verify actual APNs delivery.
