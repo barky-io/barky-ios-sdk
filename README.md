@@ -39,8 +39,8 @@ The module name is `Barky`, and the package manifest is `Package.swift` at the r
 
 ## Quick start
 
-1. Open **Channels** in the Barky console and create an **iOS SDK** channel.
-2. Open **SDK integration** and copy its `bk_sdk_…` SDK API key and Barky API URL.
+1. Open **Channels** in the Barky console and create an **iOS App SDK** channel.
+2. Open the channel’s **Channel setup** page and copy its `bk_sdk_…` SDK API key and Barky API URL.
 3. Configure once on the main actor when your app starts, then present `ChatView()`.
 
 The SDK API key is designed to be included in your app. It only bootstraps anonymous
