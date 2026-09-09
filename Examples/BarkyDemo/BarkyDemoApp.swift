@@ -26,8 +26,9 @@ struct BarkyDemoApp: App {
 
 struct DemoHome: View {
     @State private var showChat = ProcessInfo.processInfo.arguments.contains("--show-chat")
-    @State private var showUIKit = false
+    @State private var directUIKitReadLabel: UILabel?
     @State private var notificationPrepared = false
+    @State private var notificationRead = false
 
     var body: some View {
         NavigationStack {
@@ -38,7 +39,7 @@ struct DemoHome: View {
                     .font(.body).foregroundStyle(.secondary)
                 Button("Open chat demo") { showChat = true }
                     .buttonStyle(.borderedProminent).accessibilityIdentifier("demo.openChat")
-                Button("Open UIKit demo") { showUIKit = true }
+                Button("Open UIKit demo") { presentUIKitDemo() }
                     .buttonStyle(.bordered).accessibilityIdentifier("demo.openUIKit")
                 Button("Fail the next send") { DemoProtocol.failNextSend() }
                     .buttonStyle(.bordered).accessibilityIdentifier("demo.failNext")
@@ -56,15 +57,35 @@ struct DemoHome: View {
                 Text("Swift Package Manager · iOS 16+").font(.footnote).foregroundStyle(.secondary)
             }
             .padding(28)
-            .sheet(isPresented: $showChat) { ChatView(appearance: ChatAppearance(title: "Barky Demo")) }
-            .sheet(isPresented: $showUIKit) { UIKitChat() }
+            .sheet(isPresented: $showChat) {
+                ChatView(appearance: ChatAppearance(title: "Barky Demo"))
+            }
+            .onReceive(NotificationCenter.default.publisher(for: DemoProtocol.notificationRead)
+                .receive(on: DispatchQueue.main)) { _ in
+                    notificationRead = true
+                    directUIKitReadLabel?.text = "Notification reply read"
+                }
         }
     }
-}
 
-struct UIKitChat: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> ChatViewController {
-        ChatViewController(appearance: ChatAppearance(title: "Barky UIKit Demo"))
+    private func presentUIKitDemo() {
+        let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        guard var presenter = scene?.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
+        while let presented = presenter.presentedViewController { presenter = presented }
+        let controller = ChatViewController(appearance: ChatAppearance(title: "Barky UIKit Demo"))
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), notificationPrepared {
+            let label = UILabel()
+            label.text = notificationRead ? "Notification reply read" : "Waiting for read receipt"
+            label.font = .preferredFont(forTextStyle: .caption1)
+            label.translatesAutoresizingMaskIntoConstraints = false
+            controller.view.addSubview(label)
+            NSLayoutConstraint.activate([
+                label.topAnchor.constraint(equalTo: controller.view.safeAreaLayoutGuide.topAnchor),
+                label.centerXAnchor.constraint(equalTo: controller.view.centerXAnchor),
+            ])
+            directUIKitReadLabel = label
+        }
+        presenter.present(controller, animated: true)
     }
-    func updateUIViewController(_ controller: ChatViewController, context: Context) {}
 }

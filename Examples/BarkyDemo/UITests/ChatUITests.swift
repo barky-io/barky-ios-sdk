@@ -14,6 +14,11 @@ final class ChatUITests: XCTestCase {
             let visible = NSPredicate(format: "exists == true AND hittable == true")
             expectation(for: visible, evaluatedWith: latest)
             waitForExpectations(timeout: 5)
+            if presentation == "demo.openUIKit" {
+                XCTAssertTrue(app.staticTexts["Notification reply read"].waitForExistence(timeout: 5))
+            }
+            app.scrollViews["barky.messages"].swipeDown()
+            XCTAssertFalse(latest.isHittable, "Reading older replies must not jump back to the latest message.")
             app.buttons["barky.close"].tap()
         }
     }

@@ -7,6 +7,8 @@ final class DemoProtocol: URLProtocol, @unchecked Sendable {
     private static var messages: [[String: Any]] = []
     private static var receipts: [String: [String: String]] = [:]
     private static var failNext = false
+    private static var notificationMessageID: String?
+    static let notificationRead = Notification.Name("BarkyDemo.notificationRead")
     private static let conversationID = "00000000-0000-4000-8000-000000000001"
 
     static func failNextSend() { lock.lock(); failNext = true; lock.unlock() }
@@ -15,9 +17,13 @@ final class DemoProtocol: URLProtocol, @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         messages = []
         for index in 1...25 {
-            append(id: UUID().uuidString, author: "operator", body: "Earlier support reply \(index). This conversation is longer than the screen.")
+            let body = [10, 20].contains(index)
+                ? String(repeating: "This is a long synthetic support reply that spans several screens.\n", count: 18)
+                : "Earlier support reply \(index). This conversation is longer than the screen."
+            append(id: UUID().uuidString, author: "operator", body: body)
         }
         let messageID = UUID().uuidString
+        notificationMessageID = messageID
         append(id: messageID, author: "operator", body: "Latest reply opened from a notification.")
         return ["barky": ["version": 1, "customerId": customerID,
                           "conversationId": conversationID, "messageId": messageID]]
@@ -43,7 +49,11 @@ final class DemoProtocol: URLProtocol, @unchecked Sendable {
                       "expiresAt": ISO8601DateFormatter().string(from: Date().addingTimeInterval(3600))]
         } else if readRequest {
             let payload = (try? JSONSerialization.jsonObject(with: body())) as? [String: Any]
-            result = ["messageIds": payload?["messageIds"] as? [String] ?? []]
+            let ids = payload?["messageIds"] as? [String] ?? []
+            if let messageID = Self.notificationMessageID, ids.contains(messageID) {
+                NotificationCenter.default.post(name: Self.notificationRead, object: nil)
+            }
+            result = ["messageIds": ids]
         } else if request.httpMethod == "POST" {
             let key = request.value(forHTTPHeaderField: "Idempotency-Key") ?? ""
             if let receipt = Self.receipts[key] { result = receipt }

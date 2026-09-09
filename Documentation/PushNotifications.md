@@ -3,7 +3,7 @@
 Barky can notify a customer when an operator posts a reply. Enable this separately
 from chat: installing or configuring the SDK never prompts for notification permission,
 registers with APNs, swizzles methods, or replaces your notification delegate.
-Requires Barky SDK 0.4.1 or later and a Barky channel with push enabled.
+Requires Barky SDK 0.4.2 or later and a Barky channel with push enabled.
 
 ## 1. Configure your iOS channel
 

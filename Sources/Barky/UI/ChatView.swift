@@ -7,21 +7,30 @@ import SwiftUI
 public struct ChatView: View {
     @ObservedObject private var client: BarkyClient
     private let appearance: ChatAppearance
+    @ObservedObject private var sceneActivity: ChatSceneActivity
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var observer = UUID()
     @State private var isAtBottom = true
     @State private var previousMessageCount = 0
+    @State private var needsInitialScroll = true
     @State private var isVisible = false
     @State private var messageFrames: [String: CGRect] = [:]
     @State private var viewportSize = CGSize.zero
     @FocusState private var composerFocused: Bool
 
     public init(client: BarkyClient? = nil, appearance: ChatAppearance = ChatAppearance()) {
+        self.init(client: client, appearance: appearance, sceneActivity: ChatSceneActivity())
+    }
+
+    init(client: BarkyClient?, appearance: ChatAppearance, sceneActivity: ChatSceneActivity) {
         self.client = client ?? BarkySDK.shared
         self.appearance = appearance
+        self.sceneActivity = sceneActivity
     }
+
+    private var sceneIsActive: Bool { sceneActivity.isActive ?? (scenePhase == .active) }
 
     public var body: some View {
         VStack(spacing: 0) {
@@ -34,16 +43,16 @@ public struct ChatView: View {
         .tint(appearance.accentColor)
         .onAppear {
             isVisible = true
-            client.setVisible(scenePhase == .active, observer: observer)
+            client.setVisible(sceneIsActive, observer: observer)
             updateReadVisibility()
         }
         .onDisappear {
             isVisible = false
             client.setVisible(false, observer: observer)
         }
-        .onChange(of: scenePhase) { phase in
-            client.setVisible(isVisible && phase == .active, observer: observer)
-            updateReadVisibility()
+        .onChange(of: sceneIsActive) { active in
+            client.setVisible(isVisible && active, observer: observer)
+            updateReadVisibility(active: active)
         }
     }
 
@@ -133,7 +142,20 @@ public struct ChatView: View {
                     // Notification routing can load the transcript before this view
                     // exists, so its initial message count will not trigger onChange.
                     previousMessageCount = client.messages.count
+                    needsInitialScroll = true
                     proxy.scrollTo("bottom", anchor: .bottom)
+                }
+                .task(id: messageFrames) {
+                    guard needsInitialScroll, let latest = client.messages.last else { return }
+                    if let frame = messageFrames[latest.id], viewport.size.height > 0,
+                       frame.maxY > 0, frame.maxY <= viewport.size.height {
+                        needsInitialScroll = false
+                    } else {
+                        // Lazy rows can revise their estimated heights after the
+                        // initial jump. Follow those layout changes until the last
+                        // message is visible, then leave scrolling to the reader.
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
                 }
                 .onChange(of: client.messages.count) { count in
                     if isAtBottom || previousMessageCount == 0 { scrollToBottom(proxy) }
@@ -158,8 +180,8 @@ public struct ChatView: View {
         }
     }
 
-    private func updateReadVisibility() {
-        guard isVisible, scenePhase == .active else { return }
+    private func updateReadVisibility(active: Bool? = nil) {
+        guard isVisible, active ?? sceneIsActive else { return }
         let viewport = CGRect(origin: .zero, size: viewportSize)
         let ids = Set(messageFrames.filter { MessageVisibility.isReadable($0.value, in: viewport) }.keys)
         client.setVisibleMessages(ids, observer: observer)

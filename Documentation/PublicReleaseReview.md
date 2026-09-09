@@ -114,3 +114,20 @@ The new regression test failed before the fix and passed for both UIKit and Swif
 presentations after it. All four iOS Simulator UI tests and 31 package tests passed;
 two optional live fixture tests were skipped. The public file export passed
 redacted Gitleaks with no findings.
+
+## 0.4.2 scope
+
+Completes the initial scroll after lazy rows recalculate their heights, including
+replies that span multiple screens. The adjustment ends when the latest reply is
+visible so readers can scroll back normally. Directly presented UIKit chat screens
+also report their window scene's active state so visible replies are acknowledged
+and polling stops when the screen is inactive. No API or privacy changes.
+
+The expanded synthetic regression failed on 0.4.1 and passed after the fix in both
+UIKit and SwiftUI. The direct UIKit fixture also checks the latest reply's read
+receipt, and both presentations check that scrolling back is preserved.
+
+All four iOS Simulator UI tests passed. A local host app also received a real
+APNs Sandbox alert, opened the latest reply, and sent a successful read receipt.
+This does not establish Production APNs or physical-device behavior. The public
+export passed redacted Gitleaks with no findings.
