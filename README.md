@@ -7,6 +7,7 @@ It provides a SwiftUI `ChatView` and a UIKit `ChatViewController` with no extern
 - Send and receive text messages, restore conversations, and retry failed sends
 - Refresh customer sessions and poll for replies while the chat screen is active
 - Acknowledge visible support replies so operators can see their read status
+- Collect device/app system properties and set custom user/device properties
 - English and Korean localization, Dynamic Type, VoiceOver, and Dark Mode
 
 Optional APNs reply notifications are supported with channel configuration and host-app opt-in.
@@ -17,7 +18,7 @@ English is the default language for this project's documentation.
 ## Installation
 
 In Xcode, choose **File → Add Package Dependencies…**, enter the repository URL below,
-select version `0.4.2` or later, and add the **Barky** product to your app target.
+select version `0.5.0` or later, and add the **Barky** product to your app target.
 
 ```text
 https://github.com/barky-io/barky-ios-sdk.git
@@ -27,7 +28,7 @@ To use the SDK in another Swift package, add:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.4.2")
+    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.5.0")
 ],
 targets: [
     .target(name: "MyApp", dependencies: [
@@ -83,6 +84,22 @@ session creation and message requests.
 
 For development and tests, the optional `apiURL` initializer argument can override
 the service endpoint. Normal app integrations only need an SDK API key.
+
+## Customer and device properties
+
+Starting in 0.5.0, configuration automatically syncs device/app versions, model,
+language, locale and timezone, plus approximate IP location when available. The
+Inbox displays these separately from custom user/device properties and verified
+attributes. `BarkySDK.barkyID` exposes the locally generated visitor UUID, available offline after configuration.
+
+```swift
+try await BarkySDK.setUserProperties(["plan": "pro", "onboarding_completed": true])
+try await BarkySDK.setDeviceProperties(["appearance": "dark"])
+```
+
+Automatic collection can be disabled with `propertyCollection: .disabled` in
+`BarkyConfiguration`. See [properties](Documentation/Properties.md) for fields,
+collection controls, update semantics and privacy details.
 
 ## Push notifications
 

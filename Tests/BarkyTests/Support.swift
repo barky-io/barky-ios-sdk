@@ -69,7 +69,7 @@ func session(customer: String = "customer-a", token: String = "bk_session_test",
 }
 
 func configuration(provider: @escaping @Sendable () async throws -> BarkySession = { session() }) -> BarkyConfiguration {
-    BarkyConfiguration(apiURL: URL(string: "https://barky.example/api/v1")!, storageNamespace: "channel-test", sessionProvider: provider)
+    BarkyConfiguration(apiURL: URL(string: "https://barky.example/api/v1")!, storageNamespace: "channel-test", propertyCollection: .disabled, sessionProvider: provider)
 }
 
 @MainActor

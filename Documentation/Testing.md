@@ -86,3 +86,13 @@ registration cleanup after recreation, failed-cleanup retention, malformed/unrel
 payloads, and authenticated routing without read receipts. No real device token or
 APNs key is included in these fixtures. See [device testing](PushNotifications.md#delivery-behavior-and-testing)
 for the signed-app checks required to verify actual APNs delivery.
+
+## Properties verification — 0.5.0
+
+40 package tests passed with the disposable HTTP/PostgreSQL fixture (none skipped).
+Coverage includes local UUID generation before networking, Keychain restoration,
+reset and namespace isolation, automatic collection without opening chat, collection
+opt-outs, typed JSON validation, property failure isolation, and a legacy-server
+bootstrap retry. Live HTTP tests verify custom-property merging/removal and the
+local Barky ID appearing in the operator profile while chat restoration still works.
+Four iOS Simulator UI tests passed for the existing SwiftUI/UIKit chat flows.

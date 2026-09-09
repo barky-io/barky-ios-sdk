@@ -42,6 +42,7 @@ public struct BarkyConfiguration: Sendable {
     public var pollingInterval: TimeInterval
     public var conversationSubject: String
     public var messageContext: [String: String]
+    public var propertyCollection: BarkyPropertyCollection
     public let sessionProvider: (@Sendable () async throws -> BarkySession)?
 
     /// Connect directly to Barky as an anonymous visitor on this device.
@@ -50,7 +51,8 @@ public struct BarkyConfiguration: Sendable {
         apiKey: String,
         pollingInterval: TimeInterval = 3,
         conversationSubject: String = "In-app support",
-        messageContext: [String: String] = [:]
+        messageContext: [String: String] = [:],
+        propertyCollection: BarkyPropertyCollection = .init()
     ) {
         self.apiURL = apiURL
         self.apiKey = apiKey
@@ -58,6 +60,7 @@ public struct BarkyConfiguration: Sendable {
         self.pollingInterval = pollingInterval
         self.conversationSubject = conversationSubject
         self.messageContext = messageContext
+        self.propertyCollection = propertyCollection
         self.sessionProvider = nil
     }
 
@@ -67,6 +70,7 @@ public struct BarkyConfiguration: Sendable {
         pollingInterval: TimeInterval = 3,
         conversationSubject: String = "In-app support",
         messageContext: [String: String] = [:],
+        propertyCollection: BarkyPropertyCollection = .init(),
         sessionProvider: @escaping @Sendable () async throws -> BarkySession
     ) {
         self.apiURL = apiURL
@@ -75,6 +79,7 @@ public struct BarkyConfiguration: Sendable {
         self.pollingInterval = pollingInterval
         self.conversationSubject = conversationSubject
         self.messageContext = messageContext
+        self.propertyCollection = propertyCollection
         self.sessionProvider = sessionProvider
     }
 
@@ -105,6 +110,7 @@ public enum BarkyError: Error, Equatable, Sendable {
     case identityChanged
     case pendingMessage
     case invalidMessage
+    case invalidProperties
     case invalidResponse
     case http(status: Int, code: String)
     case storageUnavailable

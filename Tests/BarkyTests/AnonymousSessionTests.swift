@@ -5,8 +5,30 @@ final class AnonymousSessionTests: XCTestCase {
     private let apiKey = "bk_sdk_" + String(repeating: "a", count: 43)
 
     @MainActor
+    func testOlderServerBootstrapFallbackKeepsLocalIDAndPrivateCredential() async throws {
+        let storage = MemoryStorage()
+        let bodies = Locked<[[String: String]]>([])
+        let api = BarkyAPI(configuration: BarkyConfiguration(apiKey: apiKey, propertyCollection: .disabled), session: StubURLProtocol.session { request in
+            let body = try JSONSerialization.jsonObject(with: requestBody(request)) as! [String: String]
+            bodies.withValue { $0.append(body) }
+            if body["barkyId"] != nil { return (400, "{\"error\":{\"code\":\"invalid_request\"}}") }
+            return (201, "{\"token\":\"bk_session_test\",\"customerId\":\"visitor\",\"expiresAt\":\"2099-01-01T00:00:00Z\"}")
+        }, storage: storage)
+        let id = try api.localBarkyID()
+        let authenticated = try await api.authenticate()
+        XCTAssertEqual(authenticated.customerID, "visitor")
+        let sent = bodies.withValue { $0 }
+        XCTAssertEqual(sent.count, 2)
+        XCTAssertEqual(sent[0]["barkyId"], id)
+        XCTAssertNil(sent[1]["barkyId"])
+        XCTAssertEqual(sent[0]["installationToken"], sent[1]["installationToken"])
+        XCTAssertEqual(try api.localBarkyID(), id)
+        api.invalidate()
+    }
+
+    @MainActor
     func testAPIKeyOnlyConfigurationBootstrapsAndSendsToBarky() async throws {
-        let config = BarkyConfiguration(apiKey: apiKey)
+        let config = BarkyConfiguration(apiKey: apiKey, propertyCollection: .disabled)
         try config.validate()
         let requests = Locked<[String]>([])
         let transport = StubURLProtocol.session { request in
@@ -36,14 +58,15 @@ final class AnonymousSessionTests: XCTestCase {
     func testDirectBootstrapRestoresInstallationAndResetCreatesNewVisitor() async throws {
         let storage = MemoryStorage()
         let tokens = Locked<[String]>([])
-        let config = BarkyConfiguration(apiURL: URL(string: "https://barky.example/api/v1")!, apiKey: apiKey)
+        let config = BarkyConfiguration(apiURL: URL(string: "https://barky.example/api/v1")!, apiKey: apiKey, propertyCollection: .disabled)
         func transport() -> URLSession {
             StubURLProtocol.session { request in
                 XCTAssertEqual(request.url?.path, "/api/v1/sdk/sessions")
                 XCTAssertEqual(request.httpMethod, "POST")
                 XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer \(self.apiKey)")
                 let body = try JSONSerialization.jsonObject(with: requestBody(request)) as! [String: String]
-                XCTAssertEqual(Set(body.keys), ["installationToken"])
+                XCTAssertEqual(Set(body.keys), ["installationToken", "barkyId"])
+                XCTAssertNotNil(UUID(uuidString: body["barkyId"] ?? ""))
                 let token = try XCTUnwrap(body["installationToken"])
                 XCTAssertNotNil(token.range(of: "^bk_install_[A-Za-z0-9_-]{43}$", options: .regularExpression))
                 tokens.withValue { $0.append(token) }
@@ -69,7 +92,7 @@ final class AnonymousSessionTests: XCTestCase {
     func testBootstrapPersistsBeforeNetworkAndLostResponseUsesSameSecret() async throws {
         let storage = MemoryStorage()
         let tokens = Locked<[String]>([])
-        let config = BarkyConfiguration(apiURL: URL(string: "https://barky.example/api/v1")!, apiKey: apiKey)
+        let config = BarkyConfiguration(apiURL: URL(string: "https://barky.example/api/v1")!, apiKey: apiKey, propertyCollection: .disabled)
         let transport = StubURLProtocol.session { request in
             let body = try JSONSerialization.jsonObject(with: requestBody(request)) as! [String: String]
             tokens.withValue { $0.append(body["installationToken"]!) }
@@ -91,7 +114,7 @@ final class AnonymousSessionTests: XCTestCase {
     func testRefreshAfter401KeepsInstallationAndDoesNotAcceptChannelKey() async throws {
         let storage = MemoryStorage()
         let installations = Locked<[String]>([])
-        let config = BarkyConfiguration(apiURL: URL(string: "https://barky.example/api/v1")!, apiKey: apiKey)
+        let config = BarkyConfiguration(apiURL: URL(string: "https://barky.example/api/v1")!, apiKey: apiKey, propertyCollection: .disabled)
         let transport = StubURLProtocol.session { request in
             if request.url?.path.hasSuffix("sdk/sessions") == true {
                 let body = try JSONSerialization.jsonObject(with: requestBody(request)) as! [String: String]

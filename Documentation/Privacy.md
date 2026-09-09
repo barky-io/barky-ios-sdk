@@ -10,8 +10,13 @@
   ephemeral URLSession disables response caching/cookies and refuses redirects.
 - In addition to the SDK key and installation credential, the SDK sends the message body, conversation subject, idempotency key, and
   the `messageContext` values explicitly configured by the host app. It does not
-  automatically collect device identifiers, app versions, location, contacts, or files.
-- Keychain stores the anonymous installation credential, conversation ID and at most one pending request, including its
+  collect contacts or files. Starting in 0.5.0 it also collects device/app system
+  properties and a locally generated Barky UUID by default, and requests approximate IP-based
+  location. See [properties and collection controls](Properties.md) for the complete
+  field list, opt-outs, update timing, and identity behavior. Custom user/device
+  properties are sent only when the host calls their setters.
+- Keychain stores the anonymous installation credential, locally generated Barky UUID,
+  conversation ID and at most one pending request, including its
   body, context, idempotency key and acknowledgement. Entries are scoped by API root,
   channel namespace and server-supplied customer ID. Access is when unlocked and on
   this device only. Confirmed message history is fetched into memory, not cached on disk.
@@ -31,11 +36,16 @@
   microphone, and photo-library permission requests in this SDK.
 
 `PrivacyInfo.xcprivacy` declares customer-support content, user identifiers, and
-device identifiers (optional APNs tokens), and product interaction (message read receipts) for
+device identifiers (locally generated Barky UUID and optional APNs tokens), approximate location,
+other data (device/app configuration), and product interaction (message read receipts) for
 app functionality, linked to the customer and not used for tracking. No required-reason
 API categories are declared because this implementation does not use those APIs.
 The host app must describe its own backend behavior and any extra values it chooses
-to include in `messageContext`; the SDK cannot determine that usage.
+to include in message context or custom properties; the SDK cannot determine that usage.
+Properties are linked to the support customer. No GPS, advertising identifier, IDFV,
+or user-assigned device name is collected. Profile storage excludes raw IP addresses
+and coordinates; the network still processes IP addresses to deliver requests.
+Turning collection off or resetting locally does not erase existing server records.
 
 Manifest schema references:
 [Apple data-type values](https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacycollecteddatatypes/nsprivacycollecteddatatype),

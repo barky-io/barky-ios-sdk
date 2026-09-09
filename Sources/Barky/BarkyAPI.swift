@@ -87,7 +87,26 @@ final class BarkyAPI {
         KeychainChatStorage.key(configuration: configuration, customerID: "sdk-installation")
     }
 
+    /// Restore or generate locally before any request. This public UUID is not
+    /// the private installation credential or the server's internal customer ID.
+    func localBarkyID(customerID: String? = nil) throws -> String {
+        let key: String
+        if configuration.apiKey != nil { key = installationStorageKey }
+        else if let customerID { key = KeychainChatStorage.key(configuration: configuration, customerID: customerID) }
+        else { throw BarkyError.invalidSession }
+        var state = try storage.load(key: key)
+        if let id = state.barkyID {
+            guard UUID(uuidString: id) != nil else { throw BarkyError.storageUnavailable }
+            return id
+        }
+        let id = UUID().uuidString.lowercased()
+        state.barkyID = id
+        try storage.save(state, key: key)
+        return id
+    }
+
     private func fetchAnonymousCredential(apiKey: String) async throws -> BarkySession {
+        let barkyID = try localBarkyID()
         var state = try storage.load(key: installationStorageKey)
         if state.installationToken == nil {
             var bytes = [UInt8](repeating: 0, count: 32)
@@ -109,8 +128,17 @@ final class BarkyAPI {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try JSONEncoder().encode(["installationToken": token])
-        let (data, response) = try await session.data(for: request)
+        request.httpBody = try JSONEncoder().encode(["installationToken": token, "barkyId": barkyID])
+        var (data, response) = try await session.data(for: request)
+        if (response as? HTTPURLResponse)?.statusCode == 400,
+           (try? JSONDecoder().decode(Failure.self, from: data).error.code) == "invalid_request" {
+            // Older Barky servers strictly reject the new optional field. Keep
+            // chat usable during rolling upgrades; property sync can bind it later.
+            try Task.checkCancellation()
+            guard !invalidated else { throw CancellationError() }
+            request.httpBody = try JSONEncoder().encode(["installationToken": token])
+            (data, response) = try await session.data(for: request)
+        }
         try Task.checkCancellation()
         guard !invalidated else { throw CancellationError() }
         guard let response = response as? HTTPURLResponse else { throw BarkyError.invalidResponse }
@@ -173,6 +201,12 @@ final class BarkyAPI {
         let payload = Payload(body: pending.body, context: pending.context, subject: pending.subject)
         let path = pending.conversationID.map { "conversations/\($0)/messages" } ?? "conversations"
         return try await request(path: path, body: JSONEncoder().encode(payload), key: pending.key)
+    }
+
+    func updateProperties(_ update: PropertyUpdate) async throws -> String {
+        struct Receipt: Decodable { let barkyId: String }
+        let receipt: Receipt = try await request(path: "customer/properties", body: JSONEncoder().encode(update))
+        return receipt.barkyId
     }
 
     private func request<T: Decodable>(path: String, after: Int? = nil, body: Data? = nil, key: String? = nil) async throws -> T {

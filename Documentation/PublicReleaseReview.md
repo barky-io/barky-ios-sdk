@@ -131,3 +131,29 @@ All four iOS Simulator UI tests passed. A local host app also received a real
 APNs Sandbox alert, opened the latest reply, and sent a successful read receipt.
 This does not establish Production APNs or physical-device behavior. The public
 export passed redacted Gitleaks with no findings.
+
+## 0.5.0 scope
+
+Adds system properties, custom user/device JSON properties, collection controls,
+and a locally generated Barky visitor UUID. The SDK restores an existing Keychain
+UUID or creates one locally before networking. Public IDs remain separate from the
+private installation credential and internal server customer ID. Reset rotates the
+local identity; existing installations retain their private credential and history.
+
+Default metadata includes device family/model code, OS/app versions, language,
+locale and timezone. IP location is requested from the service's trusted ingress;
+no GPS, IDFA, IDFV, user-assigned device name, raw IP, or coordinates are collected
+into profiles. The privacy manifest adds coarse location and other data for app
+functionality, linked to the customer and not used for tracking. English docs
+explain defaults, opt-outs, retention boundaries, limits and custom-property trust.
+
+Verification: 40 package tests passed with the disposable HTTP/PostgreSQL fixture,
+including local/offline identity, restoration/reset, custom-property round trips,
+and compatibility with older bootstrap endpoints. Four iOS Simulator UI tests
+passed. The private server suite passed 29 tests, including tenant isolation,
+local-ID binding conflicts, atomic patches and merged payload limits; web tests,
+type checking, lint and build also passed. These are local verification results,
+not a hosted API deployment or a physical-device check.
+
+The implementation is original. Amplitude's public documentation and ID lifecycle
+were consulted; no Amplitude code, binary, dependency, or assets are included.

@@ -44,4 +44,5 @@ struct StoredChat: Codable, Sendable {
     var pending: PendingMessage?
     var installationToken: String?
     var pushRegistration: PushRegistration?
+    var barkyID: String?
 }

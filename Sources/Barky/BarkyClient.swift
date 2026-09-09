@@ -1,5 +1,8 @@
 import Combine
 import Foundation
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// One customer conversation. Own a client explicitly, or use BarkySDK.configure.
 /// All presentation and lifecycle methods run on the main actor.
@@ -12,11 +15,19 @@ public final class BarkyClient: ObservableObject {
     @Published public private(set) var isSending = false
     @Published public private(set) var isReady = false
     @Published public private(set) var lastError: Error?
+    /// Locally generated visitor UUID. API-key clients expose it immediately after
+    /// configuration, including offline. This is not an authentication credential.
+    @Published public private(set) var barkyID: String?
+    /// Property failures are separate from chat errors and never prevent messaging.
+    @Published public private(set) var propertySyncError: Error?
     @Published public var draft = ""
     @Published private(set) var pending: PendingMessage?
 
     private var api: BarkyAPI?
     private var push: PushRegistrationController?
+    private var properties: PropertyController?
+    private var propertyTask: Task<Void, Never>?
+    private var propertyLifecycle: AnyCancellable?
     private let storage: ChatStorage
     private var storageKey: String?
     private var cursor = 0
@@ -40,16 +51,20 @@ public final class BarkyClient: ObservableObject {
             try configuration.validate()
             api = BarkyAPI(configuration: configuration, session: session, sessionConfiguration: sessionConfiguration, storage: storage)
             push = PushRegistrationController(api: api!, storage: storage)
+            if configuration.apiKey != nil { barkyID = try api!.localBarkyID() }
+            startPropertyCollection()
         }
     }
 
-    deinit { polling?.cancel(); sending?.cancel(); reportingReads?.cancel() }
+    deinit { polling?.cancel(); sending?.cancel(); reportingReads?.cancel(); propertyTask?.cancel() }
 
     func configure(_ configuration: BarkyConfiguration, sessionConfiguration: URLSessionConfiguration? = nil) throws {
         try configuration.validate()
         invalidate()
         api = BarkyAPI(configuration: configuration, sessionConfiguration: sessionConfiguration, storage: storage)
         push = PushRegistrationController(api: api!, storage: storage)
+        if configuration.apiKey != nil { barkyID = try api!.localBarkyID() }
+        startPropertyCollection()
         restartPolling()
     }
 
@@ -58,6 +73,9 @@ public final class BarkyClient: ObservableObject {
     /// customer's server conversation or the Keychain record needed for restoration.
     public func invalidate() {
         push?.disconnect(); push = nil
+        properties?.disconnect(); properties = nil
+        propertyTask?.cancel(); propertyTask = nil; propertyLifecycle = nil
+        barkyID = nil; propertySyncError = nil
         generation = UUID()
         polling?.cancel(); polling = nil
         sending?.cancel(); sending = nil
@@ -83,8 +101,57 @@ public final class BarkyClient: ObservableObject {
         if let api, api.configuration.apiKey != nil {
             try storage.remove(key: api.installationStorageKey)
         }
+        if let key = properties?.storageKey { try storage.remove(key: key) }
         if let storageKey { try storage.remove(key: storageKey) }
         invalidate()
+    }
+
+    /// Merge custom user properties. `.null` removes a key; omitted keys are unchanged.
+    public func setUserProperties(_ values: BarkyProperties) async throws {
+        try await updateProperties(user: values)
+    }
+
+    /// Merge custom properties for this installation and customer.
+    public func setDeviceProperties(_ values: BarkyProperties) async throws {
+        try await updateProperties(device: values)
+    }
+
+    /// Refresh system properties and IP-derived location according to configuration.
+    public func syncProperties() async throws { try await updateProperties() }
+
+    private func updateProperties(user: BarkyProperties? = nil, device: BarkyProperties? = nil) async throws {
+        guard let properties else { throw BarkyError.notConfigured }
+        do {
+            let id = try await properties.update(user: user, device: device)
+            guard self.properties === properties else { throw CancellationError() }
+            barkyID = id; propertySyncError = nil
+        } catch {
+            if self.properties === properties && !(error is CancellationError) {
+                propertySyncError = error
+                if error as? BarkyError == .identityChanged { invalidate() }
+            }
+            throw error
+        }
+    }
+
+    private func startPropertyCollection() {
+        guard let api else { return }
+        properties = PropertyController(api: api)
+        #if canImport(UIKit)
+        propertyLifecycle = NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+            .receive(on: RunLoop.main).sink { [weak self] _ in self?.collectPropertiesIfNeeded() }
+        #endif
+        collectPropertiesIfNeeded()
+    }
+
+    private func collectPropertiesIfNeeded() {
+        guard propertyTask == nil, properties?.shouldCollect() == true else { return }
+        let controller = properties
+        propertyTask = Task { [weak self] in
+            guard let self else { return }
+            defer { if self.properties === controller { self.propertyTask = nil } }
+            try? await self.syncProperties()
+        }
     }
 
     /// Forward the fresh APNs token from your app delegate after obtaining consent.
@@ -213,6 +280,8 @@ public final class BarkyClient: ObservableObject {
         guard let api else { throw BarkyError.notConfigured }
         let session = try await api.authenticate()
         try check(version)
+        barkyID = try api.localBarkyID(customerID: session.customerID)
+        collectPropertiesIfNeeded()
         if storageKey == nil {
             let key = KeychainChatStorage.key(configuration: api.configuration, customerID: session.customerID)
             var state = try storage.load(key: key)
@@ -255,7 +324,10 @@ public final class BarkyClient: ObservableObject {
 
     private func persist(conversationID: String?, pending: PendingMessage?) throws {
         guard let storageKey else { throw BarkyError.storageUnavailable }
-        try storage.save(StoredChat(conversationID: conversationID, pending: pending), key: storageKey)
+        var state = try storage.load(key: storageKey)
+        state.conversationID = conversationID
+        state.pending = pending
+        try storage.save(state, key: storageKey)
     }
 
     private func check(_ version: UUID) throws {
@@ -363,6 +435,11 @@ public enum BarkySDK {
     }
 
     public static func logout() { shared.invalidate() }
+
+    public static var barkyID: String? { shared.barkyID }
+    public static func setUserProperties(_ values: BarkyProperties) async throws { try await shared.setUserProperties(values) }
+    public static func setDeviceProperties(_ values: BarkyProperties) async throws { try await shared.setDeviceProperties(values) }
+    public static func syncProperties() async throws { try await shared.syncProperties() }
 
     public static func resetSession() throws { try shared.resetSession() }
 
