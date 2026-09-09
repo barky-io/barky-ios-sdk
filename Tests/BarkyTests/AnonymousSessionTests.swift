@@ -5,6 +5,34 @@ final class AnonymousSessionTests: XCTestCase {
     private let apiKey = "bk_sdk_" + String(repeating: "a", count: 43)
 
     @MainActor
+    func testAPIKeyOnlyConfigurationBootstrapsAndSendsToBarky() async throws {
+        let config = BarkyConfiguration(apiKey: apiKey)
+        try config.validate()
+        let requests = Locked<[String]>([])
+        let transport = StubURLProtocol.session { request in
+            XCTAssertEqual(request.url?.scheme, "https")
+            XCTAssertEqual(request.url?.host, "app.barky.io")
+            let path = try XCTUnwrap(request.url?.path)
+            requests.withValue { $0.append(path) }
+            if path == "/api/v1/sdk/sessions" {
+                XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer \(self.apiKey)")
+                return (201, "{\"token\":\"bk_session_test\",\"customerId\":\"visitor\",\"expiresAt\":\"2099-01-01T00:00:00Z\"}")
+            }
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer bk_session_test")
+            return (201, receipt)
+        }
+        let api = BarkyAPI(configuration: config, session: transport, storage: MemoryStorage())
+        defer { api.invalidate() }
+        let result = try await api.send(PendingMessage(key: UUID().uuidString, body: "Hello", createdAt: Date(), conversationID: nil, subject: "Support", context: [:]))
+        XCTAssertEqual(result.conversationId, conversationID)
+        XCTAssertEqual(requests.withValue { $0 }, ["/api/v1/sdk/sessions", "/api/v1/conversations"])
+
+        let verified = BarkyConfiguration(storageNamespace: "verified-test") { session() }
+        try verified.validate()
+        XCTAssertEqual(verified.apiURL, config.apiURL)
+    }
+
+    @MainActor
     func testDirectBootstrapRestoresInstallationAndResetCreatesNewVisitor() async throws {
         let storage = MemoryStorage()
         let tokens = Locked<[String]>([])

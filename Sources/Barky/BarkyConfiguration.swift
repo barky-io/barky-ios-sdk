@@ -30,7 +30,10 @@ public struct BarkySession: Decodable, Sendable {
 }
 
 public struct BarkyConfiguration: Sendable {
-    /// The complete API root, for example https://support.example.com/api/v1.
+    /// The hosted Barky service used by default.
+    public static let defaultAPIURL = URL(string: "https://app.barky.io/api/v1")!
+
+    /// The complete API root. Override only for development or testing.
     public let apiURL: URL
     /// A stable channel/environment identifier used to isolate local conversation state.
     public let storageNamespace: String
@@ -43,7 +46,7 @@ public struct BarkyConfiguration: Sendable {
 
     /// Connect directly to Barky as an anonymous visitor on this device.
     public init(
-        apiURL: URL,
+        apiURL: URL = BarkyConfiguration.defaultAPIURL,
         apiKey: String,
         pollingInterval: TimeInterval = 3,
         conversationSubject: String = "In-app support",
@@ -59,7 +62,7 @@ public struct BarkyConfiguration: Sendable {
     }
 
     public init(
-        apiURL: URL,
+        apiURL: URL = BarkyConfiguration.defaultAPIURL,
         storageNamespace: String,
         pollingInterval: TimeInterval = 3,
         conversationSubject: String = "In-app support",

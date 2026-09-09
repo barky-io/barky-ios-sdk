@@ -1,5 +1,18 @@
 # Public release review — 2026-09-07
 
+## Hosted endpoint default — 2026-09-10
+
+Version 0.2.1 makes the API URL optional. The public Barky service address is
+included in the SDK; apps only supply their SDK API key. The published service
+address is not a credential. No live API keys or customer data are included.
+Explicit endpoint overrides remain available for development and testing.
+
+The demo uses the same API-key-only initializer and intercepts every SDK request
+with its synthetic transport, so it does not send demo messages to Barky.
+Local verification passed 20 package tests; two optional backend integration tests
+were skipped because their disposable server was not running. The new transport
+test checks the default HTTPS host and API paths for session creation and sending.
+
 ## SDK API key update — 2026-09-09
 
 Version 0.2.0 adds direct Barky integration using a publishable `bk_sdk_…` API key.

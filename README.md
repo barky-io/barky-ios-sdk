@@ -15,7 +15,7 @@ English is the default language for this project's documentation.
 ## Installation
 
 In Xcode, choose **File → Add Package Dependencies…**, enter the repository URL below,
-select version `0.2.0` or later, and add the **Barky** product to your app target.
+select version `0.2.1` or later, and add the **Barky** product to your app target.
 
 ```text
 https://github.com/barky-io/barky-ios-sdk.git
@@ -25,7 +25,7 @@ To use the SDK in another Swift package, add:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.2.0")
+    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.2.1")
 ],
 targets: [
     .target(name: "MyApp", dependencies: [
@@ -40,7 +40,7 @@ The module name is `Barky`, and the package manifest is `Package.swift` at the r
 ## Quick start
 
 1. Open **Channels** in the Barky console and create an **iOS App SDK** channel.
-2. Open the channel’s **Channel setup** page and copy its `bk_sdk_…` SDK API key and Barky API URL.
+2. Open the channel’s **Channel setup** page and copy its `bk_sdk_…` SDK API key.
 3. Configure once on the main actor when your app starts, then present `ChatView()`.
 
 The SDK API key is designed to be included in your app. It only bootstraps anonymous
@@ -54,7 +54,6 @@ import SwiftUI
 @MainActor
 func configureSupport() throws {
     try BarkySDK.configure(BarkyConfiguration(
-        apiURL: URL(string: "https://YOUR_BARKY_HOST/api/v1")!,
         apiKey: "YOUR_SDK_API_KEY"
     ))
 }
@@ -71,14 +70,17 @@ struct SupportButton: View {
 }
 ```
 
-`apiURL` points to the Barky service, including `/api/v1`. The SDK creates a random,
-private installation credential and saves it in this device's Keychain before the
+The SDK connects to Barky automatically; no API URL configuration is required.
+It creates a random, private installation credential and saves it in this device's Keychain before the
 first request. Barky uses it to create and refresh the visitor's short-lived session.
 No customer backend, server key, login, or session-provider callback is needed.
 
 SDK keys and Custom API server keys are different credentials. Never substitute a
 `bk_channel_…` server key for an SDK key. Disabling the SDK channel rejects subsequent
 session creation and message requests.
+
+For development and tests, the optional `apiURL` initializer argument can override
+the service endpoint. Normal app integrations only need an SDK API key.
 
 ## UIKit and appearance
 
@@ -166,7 +168,7 @@ are documented in [Provenance](Documentation/Provenance.md).
 
 ## Verified user sessions (optional)
 
-For server-verified user identities, create a **Custom API** channel instead of an iOS SDK channel. This optional mode uses your existing authenticated backend to issue sessions. Configure the SDK once on the main actor, after sign-in. Set `apiURL` to your Barky API URL, including `/api/v1`.
+For server-verified user identities, create a **Custom API** channel instead of an iOS App SDK channel. This optional mode uses your existing authenticated backend to issue sessions. Configure the SDK once on the main actor, after sign-in.
 
 ```swift
 import Barky
@@ -175,7 +177,6 @@ import SwiftUI
 @MainActor
 func configureSupport() throws {
     try BarkySDK.configure(BarkyConfiguration(
-        apiURL: URL(string: "https://YOUR_BARKY_HOST/api/v1")!,
         storageNamespace: "YOUR_CHANNEL_ID"
     ) {
         // Implement this method using your app's authenticated networking layer.

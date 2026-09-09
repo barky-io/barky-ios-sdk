@@ -8,13 +8,11 @@ struct BarkyDemoApp: App {
         transport.protocolClasses = [DemoProtocol.self]
         do {
             try BarkySDK.configure(BarkyConfiguration(
-                apiURL: URL(string: "https://demo.barky.invalid/api/v1")!,
                 apiKey: "bk_sdk_" + String(repeating: "d", count: 43), pollingInterval: 1
             ), urlSessionConfiguration: transport)
             if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
                 try BarkySDK.resetSession()
                 try BarkySDK.configure(BarkyConfiguration(
-                    apiURL: URL(string: "https://demo.barky.invalid/api/v1")!,
                     apiKey: "bk_sdk_" + String(repeating: "d", count: 43), pollingInterval: 1
                 ), urlSessionConfiguration: transport)
             }

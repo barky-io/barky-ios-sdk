@@ -11,7 +11,9 @@ final class DemoProtocol: URLProtocol, @unchecked Sendable {
 
     static func failNextSend() { lock.lock(); failNext = true; lock.unlock() }
 
-    override class func canInit(with request: URLRequest) -> Bool { request.url?.host == "demo.barky.invalid" }
+    // This protocol is installed only on the demo's SDK session. Intercept every
+    // request so the example never contacts the hosted service, even with defaults.
+    override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
         Self.lock.lock()
