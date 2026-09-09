@@ -6,16 +6,17 @@ It provides a SwiftUI `ChatView` and a UIKit `ChatViewController` with no extern
 - iOS 16+ · Swift 5.9+ · Swift Package Manager
 - Send and receive text messages, restore conversations, and retry failed sends
 - Refresh customer sessions and poll for replies while the chat screen is active
+- Acknowledge visible support replies so operators can see their read status
 - English and Korean localization, Dynamic Type, VoiceOver, and Dark Mode
 
-Attachments, push notifications, read receipts, and agent online status are not supported.
+Attachments, push notifications, and agent online status are not supported.
 
 English is the default language for this project's documentation.
 
 ## Installation
 
 In Xcode, choose **File → Add Package Dependencies…**, enter the repository URL below,
-select version `0.2.1` or later, and add the **Barky** product to your app target.
+select version `0.3.0` or later, and add the **Barky** product to your app target.
 
 ```text
 https://github.com/barky-io/barky-ios-sdk.git
@@ -25,7 +26,7 @@ To use the SDK in another Swift package, add:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.2.1")
+    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.3.0")
 ],
 targets: [
     .target(name: "MyApp", dependencies: [
@@ -81,6 +82,27 @@ session creation and message requests.
 
 For development and tests, the optional `apiURL` initializer argument can override
 the service endpoint. Normal app integrations only need an SDK API key.
+
+## Read receipts
+
+`ChatView` and `ChatViewController` automatically acknowledge support replies that
+remain visible for at least half a second while the chat is active in the foreground.
+At least half the bubble must intersect the message viewport; for replies taller
+than the viewport, half the viewport is sufficient. Merely downloading a message,
+prefetching a row, or opening the chat in the background does not mark it read.
+
+The SDK posts batches of visible message IDs to
+`POST /conversations/{id}/read-receipts` using the private customer session.
+Barky records the first acknowledgement time and the Inbox changes `Sent` to `Read`.
+`Sent` means the reply is saved and available to the customer; it does not imply
+delivery or reading. Existing messages are acknowledged when viewed with this SDK;
+old clients cannot report historical reading times.
+
+Receipt failures retry with backoff while the messages remain visible and do not
+block sending. Closing the chat or backgrounding cancels pending receipt work.
+Unconfirmed receipts are not persisted across app termination; reopening visible
+messages retries safely. Read status indicates display, not proof of comprehension.
+A custom UI built directly on `BarkyClient.refresh()` does not automatically report reads.
 
 ## UIKit and appearance
 

@@ -18,6 +18,10 @@
 - A failed or interrupted send is retained until retry succeeds or the host explicitly
   forgets local state. The retry uses the same logical payload and idempotency key.
   Uncertain sends are never silently discarded or automatically sent on app launch.
+- The built-in chat UI sends IDs of support messages displayed in the active
+  foreground viewport to the configured Barky API. The server records the first
+  acknowledgement time for the operator's read indicator. Message bodies, scroll
+  coordinates, and viewing durations are not included in receipt requests.
 - Logout clears visible data and credentials, retaining local conversation continuity.
   `resetSession()` and `forgetLocalConversation()` remove the anonymous installation
   credential and current local conversation record, then disconnect. Reset before
@@ -26,7 +30,8 @@
 - There are no analytics, tracking, push registration, file uploads, or camera,
   microphone, and photo-library permission requests in this SDK.
 
-`PrivacyInfo.xcprivacy` declares customer-support content and user identifiers for
+`PrivacyInfo.xcprivacy` declares customer-support content, user identifiers, and
+product interaction (message read receipts) for
 app functionality, linked to the customer and not used for tracking. No required-reason
 API categories are declared because this implementation does not use those APIs.
 The host app must describe its own backend behavior and any extra values it chooses

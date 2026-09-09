@@ -14,6 +14,8 @@ public struct ChatView: View {
     @State private var isAtBottom = true
     @State private var previousMessageCount = 0
     @State private var isVisible = false
+    @State private var messageFrames: [String: CGRect] = [:]
+    @State private var viewportSize = CGSize.zero
     @FocusState private var composerFocused: Bool
 
     public init(client: BarkyClient? = nil, appearance: ChatAppearance = ChatAppearance()) {
@@ -33,6 +35,7 @@ public struct ChatView: View {
         .onAppear {
             isVisible = true
             client.setVisible(scenePhase == .active, observer: observer)
+            updateReadVisibility()
         }
         .onDisappear {
             isVisible = false
@@ -40,6 +43,7 @@ public struct ChatView: View {
         }
         .onChange(of: scenePhase) { phase in
             client.setVisible(isVisible && phase == .active, observer: observer)
+            updateReadVisibility()
         }
     }
 
@@ -71,65 +75,88 @@ public struct ChatView: View {
     }
 
     private var transcript: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: 20) {
-                    if client.messages.isEmpty && client.pending == nil {
-                        welcome
-                    }
-                    ForEach(Array(client.messages.enumerated()), id: \.element.id) { index, message in
-                        if index == 0 || !Calendar.current.isDate(client.messages[index - 1].createdAt, inSameDayAs: message.createdAt) {
-                            Text(message.createdAt, format: .dateTime.month(.abbreviated).day())
-                                .font(.caption).foregroundStyle(.secondary).padding(.vertical, 4)
+        GeometryReader { viewport in
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 20) {
+                        if client.messages.isEmpty && client.pending == nil {
+                            welcome
                         }
-                        messageBubble(body: message.body, isCustomer: message.isFromCustomer,
-                                      date: message.createdAt, delivery: nil)
-                            .id(message.id)
-                    }
-                    if let pending = client.pending,
-                       !client.messages.contains(where: { $0.id == pending.messageID }) {
-                        VStack(alignment: .trailing, spacing: 8) {
-                            messageBubble(body: pending.body, isCustomer: true, date: pending.createdAt,
-                                          delivery: L10n.text(client.isSending ? "sending" : pending.messageID == nil ? "send.failed" : "sent"))
-                            if !client.isSending && pending.messageID == nil {
-                                Button(L10n.text("retry.send")) { client.retryPendingMessage() }
-                                    .font(.callout.weight(.semibold)).frame(minHeight: 44)
-                                    .accessibilityIdentifier("barky.retrySend")
+                        ForEach(Array(client.messages.enumerated()), id: \.element.id) { index, message in
+                            if index == 0 || !Calendar.current.isDate(client.messages[index - 1].createdAt, inSameDayAs: message.createdAt) {
+                                Text(message.createdAt, format: .dateTime.month(.abbreviated).day())
+                                    .font(.caption).foregroundStyle(.secondary).padding(.vertical, 4)
+                            }
+                            messageBubble(body: message.body, isCustomer: message.isFromCustomer,
+                                          date: message.createdAt, delivery: nil)
+                                .id(message.id)
+                                .background(GeometryReader { geometry in
+                                    Color.clear.preference(key: MessageFramesKey.self,
+                                        value: [message.id: geometry.frame(in: .named(observer))])
+                                })
+                        }
+                        if let pending = client.pending,
+                           !client.messages.contains(where: { $0.id == pending.messageID }) {
+                            VStack(alignment: .trailing, spacing: 8) {
+                                messageBubble(body: pending.body, isCustomer: true, date: pending.createdAt,
+                                              delivery: L10n.text(client.isSending ? "sending" : pending.messageID == nil ? "send.failed" : "sent"))
+                                if !client.isSending && pending.messageID == nil {
+                                    Button(L10n.text("retry.send")) { client.retryPendingMessage() }
+                                        .font(.callout.weight(.semibold)).frame(minHeight: 44)
+                                        .accessibilityIdentifier("barky.retrySend")
+                                }
                             }
                         }
+                        Color.clear.frame(height: 1).id("bottom")
+                            .onAppear { isAtBottom = true }
+                            .onDisappear { isAtBottom = false }
                     }
-                    Color.clear.frame(height: 1).id("bottom")
-                        .onAppear { isAtBottom = true }
-                        .onDisappear { isAtBottom = false }
+                    .padding(20)
+                    .frame(maxWidth: 760)
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(20)
-                .frame(maxWidth: 760)
-                .frame(maxWidth: .infinity)
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .refreshable { await client.refresh() }
-            .overlay(alignment: .bottomTrailing) {
-                if !isAtBottom && !client.messages.isEmpty {
-                    Button {
-                        scrollToBottom(proxy)
-                    } label: {
-                        Image(systemName: "arrow.down").frame(width: 44, height: 44)
-                            .background(.regularMaterial, in: Circle())
+                .scrollDismissesKeyboard(.interactively)
+                .refreshable { await client.refresh() }
+                .overlay(alignment: .bottomTrailing) {
+                    if !isAtBottom && !client.messages.isEmpty {
+                        Button {
+                            scrollToBottom(proxy)
+                        } label: {
+                            Image(systemName: "arrow.down").frame(width: 44, height: 44)
+                                .background(.regularMaterial, in: Circle())
+                        }
+                        .accessibilityLabel(L10n.text("latest"))
+                        .padding(16)
                     }
-                    .accessibilityLabel(L10n.text("latest"))
-                    .padding(16)
+                }
+                .onChange(of: client.messages.count) { count in
+                    if isAtBottom || previousMessageCount == 0 { scrollToBottom(proxy) }
+                    previousMessageCount = count
+                }
+                .onChange(of: client.pending?.key) { _ in scrollToBottom(proxy) }
+                .onChange(of: composerFocused) { focused in
+                    if focused { scrollToBottom(proxy) }
+                }
+                .accessibilityIdentifier("barky.messages")
+                .coordinateSpace(name: observer)
+                .onPreferenceChange(MessageFramesKey.self) { frames in
+                    messageFrames = frames
+                    viewportSize = viewport.size
+                    updateReadVisibility()
+                }
+                .onChange(of: viewport.size) { size in
+                    viewportSize = size
+                    updateReadVisibility()
                 }
             }
-            .onChange(of: client.messages.count) { count in
-                if isAtBottom || previousMessageCount == 0 { scrollToBottom(proxy) }
-                previousMessageCount = count
-            }
-            .onChange(of: client.pending?.key) { _ in scrollToBottom(proxy) }
-            .onChange(of: composerFocused) { focused in
-                if focused { scrollToBottom(proxy) }
-            }
-            .accessibilityIdentifier("barky.messages")
         }
+    }
+
+    private func updateReadVisibility() {
+        guard isVisible, scenePhase == .active else { return }
+        let viewport = CGRect(origin: .zero, size: viewportSize)
+        let ids = Set(messageFrames.filter { MessageVisibility.isReadable($0.value, in: viewport) }.keys)
+        client.setVisibleMessages(ids, observer: observer)
     }
 
     private var welcome: some View {
@@ -231,6 +258,13 @@ public struct ChatView: View {
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
         withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { proxy.scrollTo("bottom", anchor: .bottom) }
+    }
+}
+
+private struct MessageFramesKey: PreferenceKey {
+    static var defaultValue: [String: CGRect] { [:] }
+    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
     }
 }
 #endif

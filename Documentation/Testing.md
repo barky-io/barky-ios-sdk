@@ -1,5 +1,17 @@
 # Verification
 
+## Read receipt verification — 2026-09-10
+
+- 25 core tests passed, including five new read-receipt tests. Two optional
+  fixture-backed HTTP tests were skipped because their fixture was not running.
+- Tests cover fetched-but-unseen messages, offscreen/prefetched rows, partial
+  visibility, backgrounding, duplicate acknowledgements, retries and identity reset.
+- Three iOS Simulator UI tests passed for SwiftUI and UIKit presentation.
+- A real host app connected to the development API confirmed the Inbox changes
+  from `Sent` to `Read` only after the support reply is displayed.
+- In that host app, background and offscreen replies stayed `Sent`; a long reply
+  visible in the viewport became `Read` independently of the offscreen reply.
+
 ## Core tests
 
 ```sh

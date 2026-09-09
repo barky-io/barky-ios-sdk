@@ -1,5 +1,23 @@
 # Public release review — 2026-09-07
 
+## Read receipts — 2026-09-10
+
+Version 0.3.0 reports displayed support-message IDs through the existing private
+customer session. No new credentials, permissions, runtime dependencies, or
+message bodies are introduced in receipt requests. Read receipts are cancelled
+when the screen is hidden or the app becomes inactive, and receipt failures retry
+without blocking chat. The privacy manifest declares product interaction for app
+functionality, linked to the customer and not used for tracking.
+
+Core verification passed 25 tests; two optional fixture-backed tests were skipped.
+Five new tests cover viewport bounds, foreground visibility, duplicate suppression,
+identity reset, and failed receipt retries. All three Simulator UI tests passed.
+An actual host app and the development Inbox verified a saved reply becoming read
+after it was displayed. This is local development evidence, not a hosted API deployment.
+The host-app check also kept background and offscreen replies at `Sent`, while a
+visible reply became `Read`. The staged public snapshot passed redacted Gitleaks
+with no findings. No host-app keys, private paths, or customer content are included.
+
 ## Hosted endpoint default — 2026-09-10
 
 Version 0.2.1 makes the API URL optional. The public Barky service address is

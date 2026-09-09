@@ -125,6 +125,15 @@ final class BarkyAPI {
         try await request(path: "conversations/\(conversationID)/messages", after: after)
     }
 
+    func acknowledgeRead(conversationID: String, messageIDs: [String]) async throws {
+        struct Payload: Codable { let messageIds: [String] }
+        let response: Payload = try await request(
+            path: "conversations/\(conversationID)/read-receipts",
+            body: JSONEncoder().encode(Payload(messageIds: messageIDs))
+        )
+        guard Set(response.messageIds) == Set(messageIDs) else { throw BarkyError.invalidResponse }
+    }
+
     func send(_ pending: PendingMessage) async throws -> MessageReceipt {
         struct Payload: Encodable {
             let body: String

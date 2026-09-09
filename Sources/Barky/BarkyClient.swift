@@ -23,6 +23,10 @@ public final class BarkyClient: ObservableObject {
     private var observers = Set<UUID>()
     private var polling: Task<Void, Never>?
     private var sending: Task<Void, Never>?
+    private var reportingReads: Task<Void, Never>?
+    private var visibleMessages: [UUID: Set<String>] = [:]
+    private var visibleSince: [String: Date] = [:]
+    private var acknowledgedReads = Set<String>()
 
     public convenience init(configuration: BarkyConfiguration, urlSessionConfiguration: URLSessionConfiguration? = nil) throws {
         try self.init(configuration: configuration, storage: KeychainChatStorage(), sessionConfiguration: urlSessionConfiguration)
@@ -37,7 +41,7 @@ public final class BarkyClient: ObservableObject {
         }
     }
 
-    deinit { polling?.cancel(); sending?.cancel() }
+    deinit { polling?.cancel(); sending?.cancel(); reportingReads?.cancel() }
 
     func configure(_ configuration: BarkyConfiguration, sessionConfiguration: URLSessionConfiguration? = nil) throws {
         try configuration.validate()
@@ -53,6 +57,8 @@ public final class BarkyClient: ObservableObject {
         generation = UUID()
         polling?.cancel(); polling = nil
         sending?.cancel(); sending = nil
+        reportingReads?.cancel(); reportingReads = nil
+        visibleMessages = [:]; visibleSince = [:]; acknowledgedReads = []
         api?.invalidate(); api = nil
         storageKey = nil
         messages = []; conversationID = nil; conversationStatus = nil
@@ -213,8 +219,65 @@ public final class BarkyClient: ObservableObject {
 
     func setVisible(_ visible: Bool, observer: UUID) {
         if visible { observers.insert(observer) } else { observers.remove(observer) }
+        if !visible { visibleMessages[observer] = nil }
+        reconcileReadVisibility()
         if observers.isEmpty { polling?.cancel(); polling = nil }
         else { restartPolling() }
+    }
+
+    /// ChatView supplies only bubbles intersecting its unobscured viewport.
+    /// Fetching messages or mounting a prefetched LazyVStack row is not a receipt.
+    func setVisibleMessages(_ ids: Set<String>, observer: UUID) {
+        guard observers.contains(observer) else { return }
+        visibleMessages[observer] = ids
+        reconcileReadVisibility()
+    }
+
+    private func reconcileReadVisibility() {
+        let visible = observers.reduce(into: Set<String>()) { $0.formUnion(visibleMessages[$1] ?? []) }
+        let eligible = Set(messages.filter { !$0.isFromCustomer && visible.contains($0.id) }.map(\.id))
+            .subtracting(acknowledgedReads)
+        visibleSince = visibleSince.filter { eligible.contains($0.key) }
+        for id in eligible where visibleSince[id] == nil { visibleSince[id] = Date() }
+        if visibleSince.isEmpty {
+            reportingReads?.cancel(); reportingReads = nil
+        } else if reportingReads == nil {
+            startReportingReads()
+        }
+    }
+
+    private func startReportingReads() {
+        let version = generation
+        reportingReads = Task { [weak self] in
+            var failures = 0
+            while !Task.isCancelled {
+                // Require sustained visibility, and batch receipts while scrolling.
+                let delay = failures == 0 ? 0.5 : min(3 * pow(2, Double(failures - 1)), 60)
+                do { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+                catch { return }
+                guard let self, self.generation == version,
+                      let api = self.api, let conversationID = self.conversationID else { return }
+                let ids = Array(self.visibleSince.filter { Date().timeIntervalSince($0.value) >= 0.5 }
+                    .keys.sorted().prefix(100))
+                if ids.isEmpty { continue }
+                do {
+                    try await api.acknowledgeRead(conversationID: conversationID, messageIDs: ids)
+                    try self.check(version)
+                    self.acknowledgedReads.formUnion(ids)
+                    for id in ids { self.visibleSince[id] = nil }
+                    failures = 0
+                    if self.visibleSince.isEmpty { self.reportingReads = nil; return }
+                } catch {
+                    guard self.generation == version, !Task.isCancelled else { return }
+                    if error as? BarkyError == .identityChanged {
+                        self.invalidate()
+                        return
+                    }
+                    // Receipt failures never block the composer. Retry while visible.
+                    failures = min(failures + 1, 6)
+                }
+            }
+        }
     }
 
     private func restartPolling() {

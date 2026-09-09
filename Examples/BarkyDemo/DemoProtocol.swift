@@ -19,7 +19,8 @@ final class DemoProtocol: URLProtocol, @unchecked Sendable {
         Self.lock.lock()
         defer { Self.lock.unlock() }
         let sessionRequest = request.url?.path.hasSuffix("sdk/sessions") == true
-        if request.httpMethod == "POST" && !sessionRequest && Self.failNext {
+        let readRequest = request.url?.path.hasSuffix("read-receipts") == true
+        if request.httpMethod == "POST" && !sessionRequest && !readRequest && Self.failNext {
             Self.failNext = false
             client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
             return
@@ -28,6 +29,9 @@ final class DemoProtocol: URLProtocol, @unchecked Sendable {
         if sessionRequest {
             result = ["token": "bk_session_local_demo", "customerId": Self.customerID,
                       "expiresAt": ISO8601DateFormatter().string(from: Date().addingTimeInterval(3600))]
+        } else if readRequest {
+            let payload = (try? JSONSerialization.jsonObject(with: body())) as? [String: Any]
+            result = ["messageIds": payload?["messageIds"] as? [String] ?? []]
         } else if request.httpMethod == "POST" {
             let key = request.value(forHTTPHeaderField: "Idempotency-Key") ?? ""
             if let receipt = Self.receipts[key] { result = receipt }
