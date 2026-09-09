@@ -1,6 +1,23 @@
 import XCTest
 
 final class ChatUITests: XCTestCase {
+    func testPreloadedNotificationOpensAtLatestMessage() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        app.buttons["demo.prepareNotification"].tap()
+        XCTAssertTrue(app.staticTexts["Notification conversation ready"].waitForExistence(timeout: 10))
+
+        for presentation in ["demo.openUIKit", "demo.openChat"] {
+            app.buttons[presentation].tap()
+            let latest = app.staticTexts["Latest reply opened from a notification."]
+            let visible = NSPredicate(format: "exists == true AND hittable == true")
+            expectation(for: visible, evaluatedWith: latest)
+            waitForExpectations(timeout: 5)
+            app.buttons["barky.close"].tap()
+        }
+    }
+
     func testSendReplyAndReopenSameConversation() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]

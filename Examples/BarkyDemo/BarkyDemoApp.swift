@@ -27,6 +27,7 @@ struct BarkyDemoApp: App {
 struct DemoHome: View {
     @State private var showChat = ProcessInfo.processInfo.arguments.contains("--show-chat")
     @State private var showUIKit = false
+    @State private var notificationPrepared = false
 
     var body: some View {
         NavigationStack {
@@ -41,6 +42,16 @@ struct DemoHome: View {
                     .buttonStyle(.bordered).accessibilityIdentifier("demo.openUIKit")
                 Button("Fail the next send") { DemoProtocol.failNextSend() }
                     .buttonStyle(.bordered).accessibilityIdentifier("demo.failNext")
+                if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+                    Button("Prepare notification conversation") {
+                        Task {
+                            notificationPrepared = (try? await BarkySDK.handlePushNotification(
+                                DemoProtocol.prepareNotificationConversation())) == true
+                        }
+                    }
+                    .accessibilityIdentifier("demo.prepareNotification")
+                    if notificationPrepared { Text("Notification conversation ready") }
+                }
                 Spacer()
                 Text("Swift Package Manager · iOS 16+").font(.footnote).foregroundStyle(.secondary)
             }

@@ -129,6 +129,12 @@ public struct ChatView: View {
                         .padding(16)
                     }
                 }
+                .onAppear {
+                    // Notification routing can load the transcript before this view
+                    // exists, so its initial message count will not trigger onChange.
+                    previousMessageCount = client.messages.count
+                    proxy.scrollTo("bottom", anchor: .bottom)
+                }
                 .onChange(of: client.messages.count) { count in
                     if isAtBottom || previousMessageCount == 0 { scrollToBottom(proxy) }
                     previousMessageCount = count

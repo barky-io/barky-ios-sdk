@@ -11,6 +11,18 @@ final class DemoProtocol: URLProtocol, @unchecked Sendable {
 
     static func failNextSend() { lock.lock(); failNext = true; lock.unlock() }
 
+    static func prepareNotificationConversation() -> [AnyHashable: Any] {
+        lock.lock(); defer { lock.unlock() }
+        messages = []
+        for index in 1...25 {
+            append(id: UUID().uuidString, author: "operator", body: "Earlier support reply \(index). This conversation is longer than the screen.")
+        }
+        let messageID = UUID().uuidString
+        append(id: messageID, author: "operator", body: "Latest reply opened from a notification.")
+        return ["barky": ["version": 1, "customerId": customerID,
+                          "conversationId": conversationID, "messageId": messageID]]
+    }
+
     // This protocol is installed only on the demo's SDK session. Intercept every
     // request so the example never contacts the hosted service, even with defaults.
     override class func canInit(with request: URLRequest) -> Bool { true }

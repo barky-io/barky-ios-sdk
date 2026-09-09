@@ -17,7 +17,7 @@ English is the default language for this project's documentation.
 ## Installation
 
 In Xcode, choose **File → Add Package Dependencies…**, enter the repository URL below,
-select version `0.4.0` or later, and add the **Barky** product to your app target.
+select version `0.4.1` or later, and add the **Barky** product to your app target.
 
 ```text
 https://github.com/barky-io/barky-ios-sdk.git
@@ -27,7 +27,7 @@ To use the SDK in another Swift package, add:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.4.0")
+    .package(url: "https://github.com/barky-io/barky-ios-sdk.git", from: "0.4.1")
 ],
 targets: [
     .target(name: "MyApp", dependencies: [
