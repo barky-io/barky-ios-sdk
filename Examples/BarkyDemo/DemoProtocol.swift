@@ -16,13 +16,17 @@ final class DemoProtocol: URLProtocol, @unchecked Sendable {
     override func startLoading() {
         Self.lock.lock()
         defer { Self.lock.unlock() }
-        if request.httpMethod == "POST" && Self.failNext {
+        let sessionRequest = request.url?.path.hasSuffix("sdk/sessions") == true
+        if request.httpMethod == "POST" && !sessionRequest && Self.failNext {
             Self.failNext = false
             client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
             return
         }
         let result: [String: Any]
-        if request.httpMethod == "POST" {
+        if sessionRequest {
+            result = ["token": "bk_session_local_demo", "customerId": Self.customerID,
+                      "expiresAt": ISO8601DateFormatter().string(from: Date().addingTimeInterval(3600))]
+        } else if request.httpMethod == "POST" {
             let key = request.value(forHTTPHeaderField: "Idempotency-Key") ?? ""
             if let receipt = Self.receipts[key] { result = receipt }
             else {

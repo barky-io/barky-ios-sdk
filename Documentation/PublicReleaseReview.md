@@ -1,5 +1,20 @@
 # Public release review — 2026-09-07
 
+## SDK API key update — 2026-09-09
+
+Version 0.2.0 adds direct Barky integration using a publishable `bk_sdk_…` API key.
+The SDK creates and saves a random private installation credential before calling
+`POST /sdk/sessions`. The key cannot substitute for a customer session or a channel
+server key. The installation credential is now persisted in device-only Keychain;
+privacy and logout/reset documentation has been updated accordingly.
+
+The 33-file public snapshot passed Gitleaks with no findings. It contains no private
+backend source or live credentials. The privacy manifest passed validation. All 21
+package tests (including direct HTTP integration) and three Simulator UI tests passed.
+The original review below describes the initial 0.1.0 server-provider integration.
+
+## Initial publication scope
+
 Scope: the files included in the initial public SDK commit, the package manifest,
 native networking/session/storage code, example app, tests, documentation and CI.
 The private Barky backend and production infrastructure are outside this review.

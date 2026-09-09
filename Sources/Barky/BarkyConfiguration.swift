@@ -1,6 +1,6 @@
 import Foundation
 
-/// Obtain this short-lived credential from your authenticated application backend.
+/// A short-lived customer credential issued by Barky.
 /// Never put a Barky channel server key in an app.
 public struct BarkySession: Decodable, Sendable {
     public let token: String
@@ -34,10 +34,29 @@ public struct BarkyConfiguration: Sendable {
     public let apiURL: URL
     /// A stable channel/environment identifier used to isolate local conversation state.
     public let storageNamespace: String
+    /// SDK API key for an iOS SDK channel. No customer backend is required.
+    public let apiKey: String?
     public var pollingInterval: TimeInterval
     public var conversationSubject: String
     public var messageContext: [String: String]
-    public let sessionProvider: @Sendable () async throws -> BarkySession
+    public let sessionProvider: (@Sendable () async throws -> BarkySession)?
+
+    /// Connect directly to Barky as an anonymous visitor on this device.
+    public init(
+        apiURL: URL,
+        apiKey: String,
+        pollingInterval: TimeInterval = 3,
+        conversationSubject: String = "In-app support",
+        messageContext: [String: String] = [:]
+    ) {
+        self.apiURL = apiURL
+        self.apiKey = apiKey
+        self.storageNamespace = apiKey
+        self.pollingInterval = pollingInterval
+        self.conversationSubject = conversationSubject
+        self.messageContext = messageContext
+        self.sessionProvider = nil
+    }
 
     public init(
         apiURL: URL,
@@ -49,6 +68,7 @@ public struct BarkyConfiguration: Sendable {
     ) {
         self.apiURL = apiURL
         self.storageNamespace = storageNamespace
+        self.apiKey = nil
         self.pollingInterval = pollingInterval
         self.conversationSubject = conversationSubject
         self.messageContext = messageContext
@@ -61,6 +81,7 @@ public struct BarkyConfiguration: Sendable {
               apiURL.scheme == "https" || (apiURL.scheme == "http" && local),
               apiURL.user == nil, apiURL.password == nil,
               apiURL.query == nil, apiURL.fragment == nil,
+              apiKey.map({ $0.range(of: "^bk_sdk_[A-Za-z0-9_-]{43}$", options: .regularExpression) != nil }) ?? (sessionProvider != nil),
               !storageNamespace.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               pollingInterval.isFinite, pollingInterval >= 1, pollingInterval <= 300,
               !conversationSubject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,

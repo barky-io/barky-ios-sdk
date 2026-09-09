@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 // Reject redirects so bearer credentials cannot be forwarded to an unexpected host.
 private final class NoRedirects: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
@@ -14,6 +15,7 @@ private final class NoRedirects: NSObject, URLSessionTaskDelegate, @unchecked Se
 final class BarkyAPI {
     let configuration: BarkyConfiguration
     private let session: URLSession
+    private let storage: ChatStorage
     private var credential: BarkySession?
     private var credentialTask: Task<BarkySession, Error>?
     private var customerID: String?
@@ -24,8 +26,9 @@ final class BarkyAPI {
         let error: Detail
     }
 
-    init(configuration: BarkyConfiguration, session: URLSession? = nil, sessionConfiguration: URLSessionConfiguration? = nil) {
+    init(configuration: BarkyConfiguration, session: URLSession? = nil, sessionConfiguration: URLSessionConfiguration? = nil, storage: ChatStorage? = nil) {
         self.configuration = configuration
+        self.storage = storage ?? KeychainChatStorage()
         let settings = (sessionConfiguration?.copy() as? URLSessionConfiguration) ?? .ephemeral
         settings.timeoutIntervalForRequest = 30
         settings.timeoutIntervalForResource = 60
@@ -57,7 +60,14 @@ final class BarkyAPI {
     }
 
     private func fetchCredential() async throws -> BarkySession {
-        let value = try await configuration.sessionProvider()
+        let value: BarkySession
+        if let apiKey = configuration.apiKey {
+            value = try await fetchAnonymousCredential(apiKey: apiKey)
+        } else if let provider = configuration.sessionProvider {
+            value = try await provider()
+        } else {
+            throw BarkyError.invalidConfiguration
+        }
         try Task.checkCancellation()
         guard !invalidated else { throw CancellationError() }
         guard value.token.hasPrefix("bk_session_"), value.token.count <= 256,
@@ -71,6 +81,44 @@ final class BarkyAPI {
         customerID = value.customerID
         credential = value
         return value
+    }
+
+    var installationStorageKey: String {
+        KeychainChatStorage.key(configuration: configuration, customerID: "sdk-installation")
+    }
+
+    private func fetchAnonymousCredential(apiKey: String) async throws -> BarkySession {
+        var state = try storage.load(key: installationStorageKey)
+        if state.installationToken == nil {
+            var bytes = [UInt8](repeating: 0, count: 32)
+            guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {
+                throw BarkyError.storageUnavailable
+            }
+            state.installationToken = "bk_install_" + Data(bytes).base64EncodedString()
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "=", with: "")
+            // Save before the first request so a lost response cannot lose the visitor.
+            try storage.save(state, key: installationStorageKey)
+        }
+        guard let token = state.installationToken,
+              token.range(of: "^bk_install_[A-Za-z0-9_-]{43}$", options: .regularExpression) != nil
+        else { throw BarkyError.storageUnavailable }
+        var request = URLRequest(url: configuration.apiURL.appendingPathComponent("sdk/sessions"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(["installationToken": token])
+        let (data, response) = try await session.data(for: request)
+        try Task.checkCancellation()
+        guard !invalidated else { throw CancellationError() }
+        guard let response = response as? HTTPURLResponse else { throw BarkyError.invalidResponse }
+        guard (200..<300).contains(response.statusCode) else {
+            let code = (try? JSONDecoder().decode(Failure.self, from: data).error.code) ?? "request_failed"
+            throw BarkyError.http(status: response.statusCode, code: code)
+        }
+        return try JSONDecoder().decode(BarkySession.self, from: data)
     }
 
     func messages(conversationID: String, after: Int) async throws -> MessagePage {

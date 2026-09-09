@@ -37,6 +37,20 @@ isolated database. It verifies an SDK-created conversation, a real operator repl
 internal-note exclusion, session renewal through a new client, conversation restoration,
 and a follow-up customer message reopening the conversation.
 
+## Verified on 2026-09-09
+
+- 21 Swift package tests passed, including both real HTTP/PostgreSQL integration tests;
+  no tests were skipped in the fixture-backed run.
+- The direct SDK API key flow created a conversation, received an operator reply,
+  excluded an internal note, restored the visitor after client recreation, and
+  started a new visitor after reset. No host session-provider callback was used.
+- Three iOS Simulator UI tests passed with the demo's SDK API key configuration:
+  send/reply/reopen, failed-send retry, and UIKit presentation.
+- Fixtures also cover durable installation credentials, storage failures before
+  network requests, lost bootstrap responses, session renewal after HTTP 401, and reset.
+
+These are local verification results, not a production API deployment.
+
 ## Verified on 2026-09-06
 
 - 17 package tests passed, including the real HTTP/PostgreSQL integration test;

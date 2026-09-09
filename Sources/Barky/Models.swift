@@ -42,4 +42,5 @@ struct PendingMessage: Codable, Equatable, Sendable {
 struct StoredChat: Codable, Sendable {
     var conversationID: String?
     var pending: PendingMessage?
+    var installationToken: String?
 }

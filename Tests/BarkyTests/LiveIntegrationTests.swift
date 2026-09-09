@@ -2,6 +2,42 @@ import XCTest
 @testable import Barky
 
 final class LiveIntegrationTests: XCTestCase {
+    @MainActor
+    func testDirectSDKKeyRoundTripRestorationAndReset() async throws {
+        guard let raw = ProcessInfo.processInfo.environment["BARKY_INTEGRATION_URL"],
+              let base = URL(string: raw), base.host == "127.0.0.1" else {
+            throw XCTSkip("Set BARKY_INTEGRATION_URL to the isolated local fixture server")
+        }
+        let (keyData, _) = try await URLSession.shared.data(from: base.appendingPathComponent("sdk-key"))
+        let key = try JSONDecoder().decode([String: String].self, from: keyData)["apiKey"]!
+        let config = BarkyConfiguration(apiURL: base.appendingPathComponent("api/v1"), apiKey: key)
+        let storage = MemoryStorage()
+        let client = try BarkyClient(configuration: config, storage: storage)
+        await client.refresh()
+        XCTAssertTrue(client.isReady)
+        client.draft = "Hello directly from the SDK"; client.send(); await waitForSend(client)
+        XCTAssertNil(client.lastError)
+        let id = try XCTUnwrap(client.conversationID)
+        var reply = URLRequest(url: base.appendingPathComponent("test/reply"))
+        reply.httpMethod = "POST"
+        reply.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        reply.httpBody = try JSONSerialization.data(withJSONObject: ["conversationId": id])
+        let (_, response) = try await URLSession.shared.data(for: reply)
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+        client.invalidate()
+        let restored = try BarkyClient(configuration: config, storage: storage)
+        await restored.refresh()
+        XCTAssertNil(restored.lastError)
+        XCTAssertEqual(restored.conversationID, id)
+        XCTAssertEqual(restored.messages.map(\.body), ["Hello directly from the SDK", "A real operator reply"])
+        try restored.resetSession()
+        let next = try BarkyClient(configuration: config, storage: storage)
+        await next.refresh()
+        XCTAssertTrue(next.isReady)
+        XCTAssertNil(next.conversationID)
+        XCTAssertTrue(next.messages.isEmpty)
+    }
+
     /// Runs only with a maintainer-provided disposable localhost backend fixture.
     @MainActor
     func testRealBarkyHTTPRoundTripAndRestoration() async throws {

@@ -9,8 +9,9 @@ protocol ChatStorage {
     func remove(key: String) throws
 }
 
-/// Only the conversation ID and one pending send are persisted. Tokens and history
-/// stay in memory. ThisDeviceOnly prevents restoring a pending send onto another device.
+/// Stores conversation state and the anonymous installation's private resume token.
+/// Short-lived session tokens and history stay in memory. ThisDeviceOnly prevents
+/// restoring credentials or a pending send onto another device.
 @MainActor
 final class KeychainChatStorage: ChatStorage {
     private func query(_ key: String) -> [String: Any] {

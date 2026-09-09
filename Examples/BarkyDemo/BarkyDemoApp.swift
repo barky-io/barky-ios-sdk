@@ -6,16 +6,18 @@ struct BarkyDemoApp: App {
     init() {
         let transport = URLSessionConfiguration.ephemeral
         transport.protocolClasses = [DemoProtocol.self]
-        let arguments = ProcessInfo.processInfo.arguments
-        let customer = arguments.contains("--ui-testing") ? UUID().uuidString : DemoProtocol.customerID
         do {
             try BarkySDK.configure(BarkyConfiguration(
                 apiURL: URL(string: "https://demo.barky.invalid/api/v1")!,
-                storageNamespace: "local-demo", pollingInterval: 1
-            ) {
-                BarkySession(token: "bk_session_local_demo", customerID: customer,
-                             expiresAt: Date().addingTimeInterval(3600))
-            }, urlSessionConfiguration: transport)
+                apiKey: "bk_sdk_" + String(repeating: "d", count: 43), pollingInterval: 1
+            ), urlSessionConfiguration: transport)
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+                try BarkySDK.resetSession()
+                try BarkySDK.configure(BarkyConfiguration(
+                    apiURL: URL(string: "https://demo.barky.invalid/api/v1")!,
+                    apiKey: "bk_sdk_" + String(repeating: "d", count: 43), pollingInterval: 1
+                ), urlSessionConfiguration: transport)
+            }
         } catch { assertionFailure("Invalid demo configuration") }
     }
 

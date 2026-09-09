@@ -11,17 +11,21 @@ older versions do not have a separate maintenance commitment.
 
 ## Integration responsibilities
 
-- Keep channel server keys on your authenticated backend. The app receives only
-  short-lived customer sessions. The backend must derive the customer identity from
-  the authenticated app user and enforce channel/customer isolation on every request.
+- Use a `bk_sdk_…` SDK API key for direct app integration. This publishable key
+  bootstraps anonymous sessions; it cannot read conversations or administer Barky.
+  A private, random installation credential proves continuity for each visitor.
+- The optional verified-user integration uses a Custom API server key on your
+  authenticated backend. Never include a `bk_channel_…` server key in an app.
 - Use HTTPS. HTTP is accepted only for loopback development. SDK-created sessions
   reject redirects and disable response caching and cookies.
-- Call `BarkySDK.logout()` before changing app users. A refreshed session returning
+- Call `try BarkySDK.resetSession()` before changing app users in direct SDK mode,
+  handling any storage error before continuing. In verified-user mode, call
+  `BarkySDK.logout()` before changing the provider's user. A refreshed session returning
   a different customer ID invalidates visible state and outstanding work.
-- The Keychain holds the current conversation ID and one pending send. Logout
+- The Keychain holds the installation credential, current conversation ID and one pending send. Logout
   retains this local continuity record; use `forgetLocalConversation()` when it
   should also be removed. Neither operation deletes the server's records.
-- Do not log customer tokens, message bodies, or session-provider responses.
+- Do not log installation credentials, customer tokens, message bodies, or session-provider responses.
   Values explicitly supplied as `messageContext` are sent to your Barky server.
 - Custom URL protocols and session configuration are trusted host-app code. Use
   demo protocols only in testing; they are not a substitute for server authentication.

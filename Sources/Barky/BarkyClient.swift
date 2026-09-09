@@ -33,7 +33,7 @@ public final class BarkyClient: ObservableObject {
         self.storage = storage
         if let configuration {
             try configuration.validate()
-            api = BarkyAPI(configuration: configuration, session: session, sessionConfiguration: sessionConfiguration)
+            api = BarkyAPI(configuration: configuration, session: session, sessionConfiguration: sessionConfiguration, storage: storage)
         }
     }
 
@@ -42,7 +42,7 @@ public final class BarkyClient: ObservableObject {
     func configure(_ configuration: BarkyConfiguration, sessionConfiguration: URLSessionConfiguration? = nil) throws {
         try configuration.validate()
         invalidate()
-        api = BarkyAPI(configuration: configuration, sessionConfiguration: sessionConfiguration)
+        api = BarkyAPI(configuration: configuration, sessionConfiguration: sessionConfiguration, storage: storage)
         restartPolling()
     }
 
@@ -63,9 +63,18 @@ public final class BarkyClient: ObservableObject {
     /// Remove the current customer's local conversation and pending send, then sign
     /// out of the SDK. An uncertain send may already exist on the server.
     public func forgetLocalConversation() throws {
-        let key = storageKey
+        try resetSession()
+    }
+
+    /// Forget the anonymous visitor and local conversation, then disconnect.
+    /// Call before switching app accounts; configure again to create a new visitor.
+    /// A storage failure is thrown so callers can retry before changing accounts.
+    public func resetSession() throws {
+        if let api, api.configuration.apiKey != nil {
+            try storage.remove(key: api.installationStorageKey)
+        }
+        if let storageKey { try storage.remove(key: storageKey) }
         invalidate()
-        if let key { try storage.remove(key: key) }
     }
 
     /// Refresh history and status. ChatView calls this automatically while active.
@@ -224,7 +233,7 @@ public final class BarkyClient: ObservableObject {
     }
 }
 
-/// Configure once per signed-in app user, then present ChatView().
+/// Configure with your SDK API key, then present ChatView().
 @MainActor
 public enum BarkySDK {
     public static let shared: BarkyClient = try! BarkyClient(storage: KeychainChatStorage())
@@ -234,4 +243,6 @@ public enum BarkySDK {
     }
 
     public static func logout() { shared.invalidate() }
+
+    public static func resetSession() throws { try shared.resetSession() }
 }
